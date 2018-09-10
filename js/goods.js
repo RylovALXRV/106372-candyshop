@@ -2,7 +2,8 @@
 
 var catalogCardTemplate = document.querySelector('#card').content.querySelector('.card');
 var goodCardTemplate = document.querySelector('#card-order').content.querySelector('.goods_card');
-var goodCardsElem = document.querySelector('.goods__cards');
+var goodCardsElement = document.querySelector('.goods__cards');
+var catalogCardsElement = document.querySelector('.catalog__cards');
 
 var ingredients = [];
 var pictures = [];
@@ -155,7 +156,7 @@ var appendCatalogCards = function (cards) {
   cards.forEach(function (card) {
     fragmentCatalogCards.appendChild(renderCatalogCard(card));
   });
-  document.querySelector('.catalog__cards').appendChild(fragmentCatalogCards);
+  catalogCardsElement.appendChild(fragmentCatalogCards);
 };
 
 var appendGoodCards = function (cards) {
@@ -163,7 +164,7 @@ var appendGoodCards = function (cards) {
   cards.forEach(function (card) {
     fragmentGoodCards.appendChild(renderGoodCard(card));
   });
-  goodCardsElem.appendChild(fragmentGoodCards);
+  goodCardsElement.appendChild(fragmentGoodCards);
 };
 
 
@@ -173,7 +174,7 @@ var goodCards = generateCards(GOOD_CARD_AMOUNT);
 appendCatalogCards(catalogCards);
 appendGoodCards(goodCards);
 
-goodCardsElem.classList.remove('goods__cards--empty');
+goodCardsElement.classList.remove('goods__cards--empty');
 document.querySelector('.goods__card-empty').classList.add('visually-hidden');
-document.querySelector('.catalog__cards').classList.remove('catalog__cards--load');
+catalogCardsElement.classList.remove('catalog__cards--load');
 document.querySelector('.catalog__load').classList.add('visually-hidden');
