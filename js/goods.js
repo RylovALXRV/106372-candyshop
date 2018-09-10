@@ -54,15 +54,11 @@ var getOriginalElement = function (arr, data) {
 };
 
 var getCompositionList = function (amountComposition) {
-  var composition = '';
-  for (var i = 0; i < amountComposition - 1; i++) {
-    if (composition.length === 0) {
-      composition += getOriginalElement(ingredients, GoodFeature.NutritionFacts.CONTENTS);
-    } else {
-      composition += ', ' + getOriginalElement(ingredients, GoodFeature.NutritionFacts.CONTENTS);
-    }
+  var composition = [];
+  for (var i = 0; i < amountComposition; i++) {
+    composition.push(getOriginalElement(ingredients, GoodFeature.NutritionFacts.CONTENTS));
   }
-  return composition + '.';
+  return composition.join(', ') + '.';
 };
 
 var generateCards = function (amountCards) {
