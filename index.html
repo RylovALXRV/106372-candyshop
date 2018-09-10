@@ -418,7 +418,8 @@
   </section>
 
   <template id="card">
-    <article class="catalog__card card card--in-stock">
+    <!-- убрал у article class="card--in-stock" -->
+    <article class="catalog__card card">
       <header class="card__header">
         <h3 class="card__title">Чесночные сливки</h3>
         <img class="card__img" src="img/cards/ice-garlic.jpg" alt="Мороженное со вкусом чеснока" width="265" height="264">
@@ -428,7 +429,9 @@
         <div class="card__rating">
           <button class="card__btn-composition" type="button">Состав</button>
           <div class="card__stars stars">
-            <span class="stars__rating stars__rating--five">Рейтинг: 5 звёзд</span>
+            <!-- удалил у SPAN'а класс stars__rating--five -->
+            <!-- и стало похоже на правду... -->
+            <span class="stars__rating">Рейтинг: 5 звёзд</span>
             <span class="star__count">(300)</span>
           </div>
         </div>
@@ -482,6 +485,8 @@
       <p>Попробуй ещё раз, нажав <span class="catalog__show-all">«Показать всё»</span> или посмотри что мы предлагаем тебе попробовать.</p>
     </div>
   </template>
+
+  <script src="js/goods.js"></script>
 
 </body>
 </html>
