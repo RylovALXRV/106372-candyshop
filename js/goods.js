@@ -1,7 +1,8 @@
 'use strict';
 
-var catalogCard = document.querySelector('#card').content.querySelector('.card');
-var cardOrder = document.querySelector('#card-order').content.querySelector('.goods_card');
+var catalogCardTemplate = document.querySelector('#card').content.querySelector('.card');
+var goodCardTemplate = document.querySelector('#card-order').content.querySelector('.goods_card');
+var goodCardsElem = document.querySelector('.goods__cards');
 
 var ingredients = [];
 var pictures = [];
@@ -14,19 +15,22 @@ var GoodFeature = {
     'Нинзя-удар васаби', 'Хитрый баклажан', 'Горчичный вызов', 'Кедровая липучка', 'Корманный портвейн', 'Чилийский задира',
     'Беконовый взрыв', 'Арахис vs виноград', 'Сельдерейная душа', 'Початок в бутылке', 'Чернющий мистер чеснок', 'Раша федераша',
     'Кислая мина', 'Кукурузное утро', 'Икорный фуршет', 'Новогоднее настроение', 'С пивком потянет', 'Мисс креветка',
-    'Бесконечный взрыв', 'Невинные винные', 'Бельгийское пенное', 'Острый язычок'],
+    'Бесконечный взрыв', 'Невинные винные', 'Бельгийское пенное', 'Острый язычок'
+  ],
   NutritionFacts: {
     SUGAR: [true, false],
     CONTENTS: ['молоко', 'сливки', 'вода', 'пищевой краситель', 'патока', 'ароматизатор бекона', 'ароматизатор свинца',
       'ароматизатор дуба, идентичный натуральному', 'ароматизатор картофеля', 'лимонная кислота', 'загуститель',
       'эмульгатор', 'консервант: сорбат калия', 'посолочная смесь: соль, нитрит натрия', 'ксилит', 'карбамид',
-      'вилларибо', 'виллабаджо']
+      'вилларибо', 'виллабаджо'
+    ]
   },
-  PICTURE: ['gum-cedar.jpg', 'gum-chile.jpg', 'gum-eggplant.jpg', 'gum-mustard.jpg', 'gum-portwine.jpg', 'gum-wasabi.jpg',
-    'ice-cucumber.jpg', 'ice-eggplant.jpg', 'ice-garlic.jpg', 'ice-italian.jpg', 'ice-mushroom.jpg', 'ice-pig.jpg',
-    'marmalade-beer.jpg', 'marmalade-caviar.jpg', 'marmalade-corn.jpg', 'marmalade-new-year.jpg', 'marmalade-sour.jpg',
-    'marshmallow-bacon.jpg', 'marshmallow-beer.jpg', 'marshmallow-shrimp.jpg', 'marshmallow-spicy.jpg', 'marshmallow-wine.jpg',
-    'soda-bacon.jpg', 'soda-celery.jpg', 'soda-cob.jpg', 'soda-garlic.jpg', 'soda-peanut-grapes.jpg', 'soda-russian.jpg']
+  PICTURE: ['gum-cedar', 'gum-chile', 'gum-eggplant', 'gum-mustard', 'gum-portwine', 'gum-wasabi',
+    'ice-cucumber', 'ice-eggplant', 'ice-garlic', 'ice-italian', 'ice-mushroom', 'ice-pig',
+    'marmalade-beer', 'marmalade-caviar', 'marmalade-corn', 'marmalade-new-year', 'marmalade-sour',
+    'marshmallow-bacon', 'marshmallow-beer', 'marshmallow-shrimp', 'marshmallow-spicy', 'marshmallow-wine',
+    'soda-bacon', 'soda-celery', 'soda-cob', 'soda-garlic', 'soda-peanut-grapes', 'soda-russian'
+  ]
 };
 
 var getRandomElement = function (arr) {
@@ -51,15 +55,14 @@ var getOriginalElement = function (arr, data) {
 
 var getCompositionList = function (amountComposition) {
   var composition = '';
-  for (var i = 0; i < amountComposition; i++) {
-    composition += getOriginalElement(ingredients, GoodFeature.NutritionFacts.CONTENTS) + ', ';
+  for (var i = 0; i < amountComposition - 1; i++) {
+    if (composition.length === 0) {
+      composition += getOriginalElement(ingredients, GoodFeature.NutritionFacts.CONTENTS);
+    } else {
+      composition += ', ' + getOriginalElement(ingredients, GoodFeature.NutritionFacts.CONTENTS);
+    }
   }
-  // у строки убрал последний пробел и запятую
-  return composition.slice(0, -2);
-};
-
-var getPicture = function () {
-  return getOriginalElement(pictures, GoodFeature.PICTURE);
+  return composition + '.';
 };
 
 var generateCards = function (amountCards) {
@@ -73,7 +76,7 @@ var generateCards = function (amountCards) {
         energy: getRandomValue(70, 500),
         contents: getCompositionList(getRandomValue(5, 7))
       },
-      picture: getPicture(),
+      picture: getOriginalElement(pictures, GoodFeature.PICTURE),
       price: getRandomValue(100, 1500),
       rating: {
         number: getRandomValue(10, 900),
@@ -89,15 +92,6 @@ var generateCards = function (amountCards) {
 
   return cards;
 };
-
-/*
-* класс блока stars__rating должен соответствовать рейтингу.
-* В зависимости от рейтинга, блоку должен выставляться класс stars__rating--one,
-* stars__rating--two, stars__rating--three, stars__rating--four, stars__rating--five;
-*
-* Не понятно -> блоком считается SPAN, если так у него уже установлен класс stars__rating--five
-* Для пробы удалю тоже класс из разметки...
-* */
 
 var setClassAccordingToRating = function (rating, elem) {
   switch (rating) {
@@ -122,15 +116,18 @@ var setClassAccordingToRating = function (rating, elem) {
 var setClassAccordingToAmount = function (amount, elem) {
   if (amount > 5) {
     elem.classList.add('card--in-stock');
-  } else if (amount >= 1 && amount <= 5) {
+    console.log('> 5');
+  } else if (amount >= 1) {
     elem.classList.add('card--little');
+    console.log('>= 1');
   } else {
     elem.classList.add('card--soon');
   }
+  console.log('----');
 };
 
-var setClassAccordingToIsSugar = function (good, elem) {
-  if (good) {
+var setClassAccordingToIsSugar = function (isSugar, elem) {
+  if (isSugar) {
     elem.querySelector('.card__characteristic').textContent = 'Содержит сахар';
   } else {
     elem.querySelector('.card__characteristic').textContent = 'Без сахара';
@@ -138,10 +135,9 @@ var setClassAccordingToIsSugar = function (good, elem) {
 };
 
 var renderCatalogCard = function (card) {
-  var element = catalogCard.cloneNode(true);
-  element.querySelector('.card__img').src = 'img/cards/' + card.picture;
+  var element = catalogCardTemplate.cloneNode(true);
+  element.querySelector('.card__img').src = 'img/cards/' + card.picture + '.jpg';
   element.querySelector('.card__composition-list').textContent = card.nutritionFacts.contents;
-  // Это так делать нужно с ценой???
   element.querySelector('.card__price').firstChild.data = card.price + ' ';
   element.querySelector('.card__title').textContent = card.name;
   element.querySelector('.card__weight').textContent = '/ ' + card.weight + ' Г';
@@ -153,8 +149,8 @@ var renderCatalogCard = function (card) {
 };
 
 var renderGoodCard = function (goodCard) {
-  var element = cardOrder.cloneNode(true);
-  element.querySelector('.card-order__img').src = 'img/cards/' + goodCard.picture;
+  var element = goodCardTemplate.cloneNode(true);
+  element.querySelector('.card-order__img').src = 'img/cards/' + goodCard.picture + '.jpg';
   element.querySelector('.card-order__price').textContent = goodCard.price + ' ₽';
   element.querySelector('.card-order__title').textContent = goodCard.name;
   element.querySelector('.visually-hidden').textContent = goodCard.amount;
@@ -174,7 +170,7 @@ var appendGoodCards = function (cards) {
   cards.forEach(function (card) {
     fragmentGoodCards.appendChild(renderGoodCard(card));
   });
-  document.querySelector('.goods__cards').appendChild(fragmentGoodCards);
+  goodCardsElem.appendChild(fragmentGoodCards);
 };
 
 
@@ -184,7 +180,7 @@ var goodCards = generateCards(GOOD_CARD_AMOUNT);
 appendCatalogCards(catalogCards);
 appendGoodCards(goodCards);
 
-document.querySelector('.goods__cards').classList.remove('goods__cards--empty');
+goodCardsElem.classList.remove('goods__cards--empty');
 document.querySelector('.goods__card-empty').classList.add('visually-hidden');
 document.querySelector('.catalog__cards').classList.remove('catalog__cards--load');
 document.querySelector('.catalog__load').classList.add('visually-hidden');
