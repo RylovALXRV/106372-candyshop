@@ -116,14 +116,11 @@ var setClassAccordingToRating = function (rating, elem) {
 var setClassAccordingToAmount = function (amount, elem) {
   if (amount > 5) {
     elem.classList.add('card--in-stock');
-    console.log('> 5');
   } else if (amount >= 1) {
     elem.classList.add('card--little');
-    console.log('>= 1');
   } else {
     elem.classList.add('card--soon');
   }
-  console.log('----');
 };
 
 var setClassAccordingToIsSugar = function (isSugar, elem) {
