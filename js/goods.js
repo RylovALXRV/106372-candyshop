@@ -188,11 +188,11 @@ document.querySelector('.catalog__load').classList.add('visually-hidden');
 
 // --------------- #16 Личный проект: подробности ---------------------
 
-// ------         ЕСТЬ ЛИ В ЭТОМ ХОТЬ КАКАЯ-ТО ЛОГИКА           -------
-
 var catalogCardElements = document.querySelectorAll('.catalog__card');
+var catalogCardsWrap = document.querySelector('.catalog__cards-wrap');
 var goodsCardEmptyElement = document.querySelector('.goods__card-empty');
 
+// содержится ли хоть один товар в корзине
 var checkIsEmptyBasket = function (elem) {
   return elem.contains(elem.querySelector('article'));
 };
@@ -239,6 +239,32 @@ var changeAmountGood = function (evt, currentEvt, sign) {
   }
 };
 
+var sortByRating = function (a, b) {
+  return a.rating - b.rating;
+};
+
+var sortByBigToSmallPrice = function (a, b) {
+  return b.expensive - a.expensive;
+};
+
+var sortBySmallToBigPrice = function (a, b) {
+  return a.cheep - b.cheep;
+};
+
+var sortByFeature = function (arr, evt) {
+  switch (evt) {
+    case 'rating':
+      arr.sort(sortByRating);
+      return;
+    case 'cheep':
+      arr.sort(sortBySmallToBigPrice);
+      return;
+    case 'expensive':
+      arr.sort(sortByBigToSmallPrice);
+      return;
+  }
+};
+
 for (var i = 0; i < catalogCardElements.length; i++) {
   catalogCardElements[i].addEventListener('click', function (evt) {
     evt.preventDefault();
@@ -282,11 +308,40 @@ goodCardsElement.addEventListener('click', function (evt) {
     target.parentNode.remove();
   }
 
-  if (target.tagName === 'BUTTON' && target.classList.contains('card-order__btn--increase')) {
+  if (target.tagName === 'BUTTON' && checkIsClickFeature(target, 'card-order__btn--increase')) {
     changeAmountGood(target, currentTarget, '+');
-  } else if (target.tagName === 'BUTTON' && target.classList.contains('card-order__btn--decrease')) {
+  } else if (target.tagName === 'BUTTON' && checkIsClickFeature(target, 'card-order__btn--decrease')) {
     changeAmountGood(target, currentTarget, '-');
   }
 
   addOrRemoveTextForBasket(checkIsEmptyBasket(goodCardsElement), goodsCardEmptyElement);
+});
+
+document.querySelector('.catalog__sidebar').addEventListener('click', function (evt) {
+  var target = evt.target;
+  var catalogCardsElements = catalogCardsElement.querySelectorAll('article');
+  if (target.tagName !== 'INPUT') {
+    return;
+  }
+
+  var articles = [];
+
+  for (var j = 0; j < catalogCardsElements.length; j++) {
+    articles.push({
+      elem: catalogCardsElements[j],
+      rating: catalogCardsElements[j].querySelector('.star__count').textContent,
+      expensive: catalogCardsElements[j].querySelector('.card__price').firstChild.data,
+      cheep: catalogCardsElements[j].querySelector('.card__price').firstChild.data
+    });
+  }
+
+  sortByFeature(articles, target.value);
+
+  catalogCardsWrap.removeChild(catalogCardsElement);
+
+  for (var k = 0; k < articles.length; k++) {
+    catalogCardsElement.appendChild(articles[k].elem);
+  }
+
+  catalogCardsWrap.insertBefore(catalogCardsElement, catalogCardsWrap.firstChild);
 });
