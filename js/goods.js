@@ -7,9 +7,10 @@ var catalogCardsElement = document.querySelector('.catalog__cards');
 
 var ingredients = [];
 var pictures = [];
+var names = [];
 
 var CATALOG_CARD_AMOUNT = 26;
-var GOOD_CARD_AMOUNT = 3;
+// var GOOD_CARD_AMOUNT = 3;
 
 var GoodFeature = {
   NAME: ['Чесночные сливки', 'Огуречный педант', 'Молочная хрюша', 'Грибной шейк', 'Баклажановое безумие', 'Паприколу итальяно',
@@ -67,7 +68,7 @@ var generateCards = function (amountCards) {
   for (var i = 0; i < amountCards; i++) {
     cards.push({
       amount: getRandomValue(0, 20),
-      name: getRandomElement(GoodFeature.NAME),
+      name: getOriginalElement(names, GoodFeature.NAME),
       nutritionFacts: {
         sugar: getRandomElement(GoodFeature.NutritionFacts.SUGAR),
         energy: getRandomValue(70, 500),
@@ -86,6 +87,7 @@ var generateCards = function (amountCards) {
   }
   // очистил массив
   pictures = [];
+  names = [];
 
   return cards;
 };
@@ -144,10 +146,12 @@ var renderCatalogCard = function (card) {
 
 var renderGoodCard = function (goodCard) {
   var element = goodCardTemplate.cloneNode(true);
-  element.querySelector('.card-order__img').src = 'img/cards/' + goodCard.picture + '.jpg';
+  element.querySelector('.card-order__img').src = goodCard.img;
   element.querySelector('.card-order__price').textContent = goodCard.price + ' ₽';
   element.querySelector('.card-order__title').textContent = goodCard.name;
   element.querySelector('.visually-hidden').textContent = goodCard.amount;
+  element.querySelector('.visually-hidden').textContent = 1;
+  element.querySelector('.card-order__count').value = element.querySelector('.visually-hidden').textContent;
   return element;
 };
 
@@ -159,22 +163,95 @@ var appendCatalogCards = function (cards) {
   catalogCardsElement.appendChild(fragmentCatalogCards);
 };
 
-var appendGoodCards = function (cards) {
-  var fragmentGoodCards = document.createDocumentFragment();
-  cards.forEach(function (card) {
-    fragmentGoodCards.appendChild(renderGoodCard(card));
-  });
-  goodCardsElement.appendChild(fragmentGoodCards);
-};
-
+// var appendGoodCards = function (cards) {
+//   var fragmentGoodCards = document.createDocumentFragment();
+//   cards.forEach(function (card) {
+//     fragmentGoodCards.appendChild(renderGoodCard(card));
+//   });
+//   goodCardsElement.appendChild(fragmentGoodCards);
+// };
 
 var catalogCards = generateCards(CATALOG_CARD_AMOUNT);
-var goodCards = generateCards(GOOD_CARD_AMOUNT);
+// var goodCards = generateCards(GOOD_CARD_AMOUNT);
 
 appendCatalogCards(catalogCards);
-appendGoodCards(goodCards);
+// appendGoodCards(goodCards);
 
 goodCardsElement.classList.remove('goods__cards--empty');
-document.querySelector('.goods__card-empty').classList.add('visually-hidden');
+// document.querySelector('.goods__card-empty').classList.add('visually-hidden');
 catalogCardsElement.classList.remove('catalog__cards--load');
 document.querySelector('.catalog__load').classList.add('visually-hidden');
+
+// --------------- #16 Личный проект: подробности ---------------------
+
+// ------         ЕСТЬ ЛИ В ЭТОМ ХОТЬ КАКАЯ-ТО ЛОГИКА           -------
+
+var catalogCardElements = document.querySelectorAll('.catalog__card');
+var goodsCardEmptyElement = document.querySelector('.goods__card-empty');
+
+var checkIsEmptyBasket = function (elem) {
+  return elem.contains(elem.querySelector('article'));
+};
+
+var addOrRemoveTextForBasket = function (isEmpty, elem) {
+  if (!isEmpty) {
+    elem.classList.remove('visually-hidden');
+  } else {
+    elem.classList.add('visually-hidden');
+  }
+};
+
+var checkIsClickFeature = function (evt, cls) {
+  return evt.classList.contains(cls);
+};
+
+var addOrRemoveFeatureForGood = function (isFeature, evt, cls) {
+  if (isFeature) {
+    evt.classList.toggle(cls);
+  }
+};
+
+for (var i = 0; i < catalogCardElements.length; i++) {
+  catalogCardElements[i].addEventListener('click', function (evt) {
+    evt.preventDefault();
+    var target = evt.target;
+    var currentTarget = evt.currentTarget;
+    var goodCardsElements = goodCardsElement.querySelectorAll('article');
+
+    addOrRemoveFeatureForGood(checkIsClickFeature(target, 'card__btn-favorite'), target, 'card__btn-favorite--selected');
+    addOrRemoveFeatureForGood(checkIsClickFeature(target, 'card__btn-composition'), currentTarget.querySelector('.card__composition'), 'card__composition--hidden');
+
+    if (!target.classList.contains('card__btn')) {
+      return;
+    }
+
+    var goodCard = {
+      img: currentTarget.querySelector('.card__img').src,
+      price: currentTarget.querySelector('.card__price').firstChild.data,
+      name: currentTarget.querySelector('.card__title').textContent,
+    };
+
+    for (var j = 0; j < goodCardsElements.length; j++) {
+      if (goodCardsElements && currentTarget.querySelector('.card__title').textContent === goodCardsElements[j].querySelector('.card-order__title').textContent) {
+        goodCardsElements[j].querySelector('.card-order__count').value = parseFloat(goodCardsElements[j].querySelector('.card-order__count').value) + 1;
+        return;
+      }
+    }
+
+    goodCardsElement.appendChild(renderGoodCard(goodCard));
+
+    addOrRemoveTextForBasket(checkIsEmptyBasket(goodCardsElement, goodsCardEmptyElement));
+  });
+}
+
+goodCardsElement.addEventListener('click', function (evt) {
+  evt.preventDefault();
+  var target = evt.target;
+
+  if (target.classList.contains('card-order__close')) {
+    target.parentNode.remove();
+  }
+
+  addOrRemoveTextForBasket(checkIsEmptyBasket(goodCardsElement, goodsCardEmptyElement));
+});
+
