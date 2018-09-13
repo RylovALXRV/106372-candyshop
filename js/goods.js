@@ -5,6 +5,8 @@ var goodCardTemplate = document.querySelector('#card-order').content.querySelect
 var goodCardsElement = document.querySelector('.goods__cards');
 var catalogCardsElement = document.querySelector('.catalog__cards');
 
+var dataId = 1;
+
 var ingredients = [];
 var pictures = [];
 var names = [];
@@ -138,6 +140,7 @@ var renderCatalogCard = function (card) {
   element.querySelector('.card__title').textContent = card.name;
   element.querySelector('.card__weight').textContent = '/ ' + card.weight + ' Г';
   element.querySelector('.star__count').textContent = card.rating.number;
+  element.dataset.id = dataId++;
   setClassAccordingToAmount(card.amount, element);
   setClassAccordingToIsSugar(card.nutritionFacts.sugar, element);
   setClassAccordingToRating(card.rating.value, element.querySelector('.stars__rating'));
@@ -152,6 +155,7 @@ var renderGoodCard = function (goodCard) {
   element.querySelector('.visually-hidden').textContent = goodCard.amount;
   element.querySelector('.visually-hidden').textContent = 1;
   element.querySelector('.card-order__count').value = element.querySelector('.visually-hidden').textContent;
+  element.dataset.cardId = goodCard.id;
   return element;
 };
 
@@ -211,6 +215,30 @@ var addOrRemoveFeatureForGood = function (isFeature, evt, cls) {
   }
 };
 
+var changeSignForInputValue = function (evt, sign) {
+  switch (sign) {
+    case '+':
+      evt.querySelector('.card-order__count').value = parseFloat(evt.querySelector('.card-order__count').value) + 1;
+      return;
+    case '-':
+      evt.querySelector('.card-order__count').value = parseFloat(evt.querySelector('.card-order__count').value) - 1;
+      return;
+  }
+};
+
+var changeAmountGood = function (evt, currentEvt, sign) {
+  while (evt.tagName !== currentEvt) {
+    if (evt.tagName === 'ARTICLE') {
+      changeSignForInputValue(evt, sign);
+      if (parseFloat(evt.querySelector('.card-order__count').value) <= 0) {
+        evt.remove();
+      }
+      return;
+    }
+    evt = evt.parentNode;
+  }
+};
+
 for (var i = 0; i < catalogCardElements.length; i++) {
   catalogCardElements[i].addEventListener('click', function (evt) {
     evt.preventDefault();
@@ -229,10 +257,11 @@ for (var i = 0; i < catalogCardElements.length; i++) {
       img: currentTarget.querySelector('.card__img').src,
       price: currentTarget.querySelector('.card__price').firstChild.data,
       name: currentTarget.querySelector('.card__title').textContent,
+      id: currentTarget.dataset.id
     };
 
     for (var j = 0; j < goodCardsElements.length; j++) {
-      if (goodCardsElements && currentTarget.querySelector('.card__title').textContent === goodCardsElements[j].querySelector('.card-order__title').textContent) {
+      if (goodCardsElements && currentTarget.dataset.id === goodCardsElements[j].dataset.cardId) {
         goodCardsElements[j].querySelector('.card-order__count').value = parseFloat(goodCardsElements[j].querySelector('.card-order__count').value) + 1;
         return;
       }
@@ -240,18 +269,24 @@ for (var i = 0; i < catalogCardElements.length; i++) {
 
     goodCardsElement.appendChild(renderGoodCard(goodCard));
 
-    addOrRemoveTextForBasket(checkIsEmptyBasket(goodCardsElement, goodsCardEmptyElement));
+    addOrRemoveTextForBasket(checkIsEmptyBasket(goodCardsElement), goodsCardEmptyElement);
   });
 }
 
 goodCardsElement.addEventListener('click', function (evt) {
   evt.preventDefault();
   var target = evt.target;
+  var currentTarget = evt.currentTarget;
 
-  if (target.classList.contains('card-order__close')) {
+  if (target.tagName === 'A' && target.classList.contains('card-order__close')) {
     target.parentNode.remove();
   }
 
-  addOrRemoveTextForBasket(checkIsEmptyBasket(goodCardsElement, goodsCardEmptyElement));
-});
+  if (target.tagName === 'BUTTON' && target.classList.contains('card-order__btn--increase')) {
+    changeAmountGood(target, currentTarget, '+');
+  } else if (target.tagName === 'BUTTON' && target.classList.contains('card-order__btn--decrease')) {
+    changeAmountGood(target, currentTarget, '-');
+  }
 
+  addOrRemoveTextForBasket(checkIsEmptyBasket(goodCardsElement), goodsCardEmptyElement);
+});
