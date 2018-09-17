@@ -191,17 +191,26 @@ document.querySelector('.catalog__load').classList.add('visually-hidden');
 var catalogCardElements = document.querySelectorAll('.catalog__card');
 var catalogCardsWrap = document.querySelector('.catalog__cards-wrap');
 var goodsCardEmptyElement = document.querySelector('.goods__card-empty');
+var goodsPriceElement = document.querySelector('.goods__price');
 
 // содержится ли хоть один товар в корзине
 var checkIsEmptyBasket = function (elem) {
   return elem.contains(elem.querySelector('article'));
 };
 
-var addOrRemoveTextForBasket = function (isEmpty, elem) {
+/*
+* У меня в данном случае с toggle реализовать не получилось...
+* если я оставлю (!isEmpty) {elem.classList.toggle('visually-hidden')},
+* то когда товар в корзине появился - (!isEmpty) ---> false и
+* ничего не произойдет
+* */
+var changeTextForBasket = function (isEmpty) {
   if (!isEmpty) {
-    elem.classList.remove('visually-hidden');
+    goodsCardEmptyElement.classList.remove('visually-hidden');
+    document.querySelector('.goods__total').classList.add('visually-hidden');
   } else {
-    elem.classList.add('visually-hidden');
+    goodsCardEmptyElement.classList.add('visually-hidden');
+    document.querySelector('.goods__total').classList.remove('visually-hidden');
   }
 };
 
@@ -209,19 +218,26 @@ var checkIsClickFeature = function (evt, cls) {
   return evt.classList.contains(cls);
 };
 
-var addOrRemoveFeatureForGood = function (isFeature, evt, cls) {
+var changeFeatureForGood = function (isFeature, evt, cls) {
   if (isFeature) {
     evt.classList.toggle(cls);
   }
 };
 
 var changeSignForInputValue = function (evt, sign) {
+  // когда в переменную пишу ----evt.querySelector('.card-order__count').value---
+  // он пишет, что переменная нигде не используется...
+  var cardOrderCountEvt = evt.querySelector('.card-order__count');
+  var cardOrderPriceEvt = evt.querySelector('.card-order__price');
+
   switch (sign) {
     case '+':
-      evt.querySelector('.card-order__count').value = parseFloat(evt.querySelector('.card-order__count').value) + 1;
+      cardOrderCountEvt.value = parseFloat(cardOrderCountEvt.value) + 1;
+      goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + parseFloat(cardOrderPriceEvt.textContent) + ' ₽';
       return;
     case '-':
-      evt.querySelector('.card-order__count').value = parseFloat(evt.querySelector('.card-order__count').value) - 1;
+      cardOrderCountEvt.value = parseFloat(cardOrderCountEvt.value) - 1;
+      goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) - parseFloat(cardOrderPriceEvt.textContent) + ' ₽';
       return;
   }
 };
@@ -239,8 +255,18 @@ var changeAmountGood = function (evt, currentEvt, sign) {
   }
 };
 
+var findParentElement = function (evt, currentEvt) {
+  while (evt.tagName !== currentEvt) {
+    if (evt.tagName === 'ARTICLE') {
+      break;
+    }
+    evt = evt.parentNode;
+  }
+  return evt;
+};
+
 var sortByRating = function (a, b) {
-  return a.rating - b.rating;
+  return b.rating - a.rating;
 };
 
 var sortByBigToSmallPrice = function (a, b) {
@@ -251,7 +277,11 @@ var sortBySmallToBigPrice = function (a, b) {
   return a.cheep - b.cheep;
 };
 
-var sortByFeature = function (arr, evt) {
+var sortByPopular = function (a, b) {
+  return a.elem.dataset.id - b.elem.dataset.id;
+};
+
+var sortByFeature = function (evt, arr) {
   switch (evt) {
     case 'rating':
       arr.sort(sortByRating);
@@ -262,7 +292,32 @@ var sortByFeature = function (arr, evt) {
     case 'expensive':
       arr.sort(sortByBigToSmallPrice);
       return;
+    case 'popular':
+      arr.sort(sortByPopular);
   }
+};
+
+var countGoodsInBasket = function (goods) {
+  return goods.length + 1;
+};
+
+var getSumElement = function (evt, currentTarget) {
+  return parseFloat(findParentElement(evt, currentTarget).querySelector('.card__price').firstChild.data);
+};
+
+var getContentBasket = function (evt, currentTarget) {
+  var goodCardsElements = goodCardsElement.querySelectorAll('article');
+  for (var j = 0; j < goodCardsElements.length; j++) {
+    if (goodCardsElements && currentTarget.dataset.id === goodCardsElements[j].dataset.cardId) {
+      goodCardsElements[j].querySelector('.card-order__count').value = parseFloat(goodCardsElements[j].querySelector('.card-order__count').value) + 1;
+      return false;
+    }
+  }
+  return true;
+};
+
+var countTotalSumElement = function (elem) {
+  return parseFloat(elem.querySelector('.card-order__price').textContent) * elem.querySelector('.card-order__count').value;
 };
 
 for (var i = 0; i < catalogCardElements.length; i++) {
@@ -272,8 +327,8 @@ for (var i = 0; i < catalogCardElements.length; i++) {
     var currentTarget = evt.currentTarget;
     var goodCardsElements = goodCardsElement.querySelectorAll('article');
 
-    addOrRemoveFeatureForGood(checkIsClickFeature(target, 'card__btn-favorite'), target, 'card__btn-favorite--selected');
-    addOrRemoveFeatureForGood(checkIsClickFeature(target, 'card__btn-composition'), currentTarget.querySelector('.card__composition'), 'card__composition--hidden');
+    changeFeatureForGood(checkIsClickFeature(target, 'card__btn-favorite'), target, 'card__btn-favorite--selected');
+    changeFeatureForGood(checkIsClickFeature(target, 'card__btn-composition'), currentTarget.querySelector('.card__composition'), 'card__composition--hidden');
 
     if (!target.classList.contains('card__btn')) {
       return;
@@ -286,16 +341,15 @@ for (var i = 0; i < catalogCardElements.length; i++) {
       id: currentTarget.dataset.id
     };
 
-    for (var j = 0; j < goodCardsElements.length; j++) {
-      if (goodCardsElements && currentTarget.dataset.id === goodCardsElements[j].dataset.cardId) {
-        goodCardsElements[j].querySelector('.card-order__count').value = parseFloat(goodCardsElements[j].querySelector('.card-order__count').value) + 1;
-        return;
-      }
+
+    if (getContentBasket(target, currentTarget)) {
+      goodCardsElement.appendChild(renderGoodCard(goodCard));
     }
 
-    goodCardsElement.appendChild(renderGoodCard(goodCard));
-
-    addOrRemoveTextForBasket(checkIsEmptyBasket(goodCardsElement), goodsCardEmptyElement);
+    if (!changeTextForBasket(checkIsEmptyBasket(goodCardsElement))) {
+      document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + countGoodsInBasket(goodCardsElements) + ' товаров';
+      document.querySelector('.goods__price').textContent = parseFloat(document.querySelector('.goods__price').textContent) + getSumElement(target, currentTarget) + ' ₽';
+    }
   });
 }
 
@@ -306,6 +360,8 @@ goodCardsElement.addEventListener('click', function (evt) {
 
   if (target.tagName === 'A' && target.classList.contains('card-order__close')) {
     target.parentNode.remove();
+    var parentTarget = findParentElement(target, currentTarget);
+    goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) - countTotalSumElement(parentTarget) + ' ₽';
   }
 
   if (target.tagName === 'BUTTON' && checkIsClickFeature(target, 'card-order__btn--increase')) {
@@ -314,7 +370,7 @@ goodCardsElement.addEventListener('click', function (evt) {
     changeAmountGood(target, currentTarget, '-');
   }
 
-  addOrRemoveTextForBasket(checkIsEmptyBasket(goodCardsElement), goodsCardEmptyElement);
+  changeTextForBasket(checkIsEmptyBasket(goodCardsElement));
 });
 
 document.querySelector('.catalog__sidebar').addEventListener('click', function (evt) {
@@ -331,11 +387,12 @@ document.querySelector('.catalog__sidebar').addEventListener('click', function (
       elem: catalogCardsElements[j],
       rating: catalogCardsElements[j].querySelector('.star__count').textContent,
       expensive: catalogCardsElements[j].querySelector('.card__price').firstChild.data,
-      cheep: catalogCardsElements[j].querySelector('.card__price').firstChild.data
+      cheep: catalogCardsElements[j].querySelector('.card__price').firstChild.data,
+      availability: catalogCardsElements[j].classList.contains('card--soon')
     });
   }
 
-  sortByFeature(articles, target.value);
+  sortByFeature(target.value, articles);
 
   catalogCardsWrap.removeChild(catalogCardsElement);
 
