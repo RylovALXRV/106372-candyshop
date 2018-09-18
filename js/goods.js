@@ -94,41 +94,41 @@ var generateCards = function (amountCards) {
   return cards;
 };
 
-var setClassAccordingToRating = function (rating, elem) {
+var setClassAccordingToRating = function (rating, element) {
   switch (rating) {
     case 1:
-      elem.classList.add('stars__rating--one');
+      element.classList.add('stars__rating--one');
       return;
     case 2:
-      elem.classList.add('stars__rating--two');
+      element.classList.add('stars__rating--two');
       return;
     case 3:
-      elem.classList.add('stars__rating--three');
+      element.classList.add('stars__rating--three');
       return;
     case 4:
-      elem.classList.add('stars__rating--four');
+      element.classList.add('stars__rating--four');
       return;
     case 5:
-      elem.classList.add('stars__rating--five');
+      element.classList.add('stars__rating--five');
       return;
   }
 };
 
-var setClassAccordingToAmount = function (amount, elem) {
+var setClassAccordingToAmount = function (amount, element) {
   if (amount > 5) {
-    elem.classList.add('card--in-stock');
+    element.classList.add('card--in-stock');
   } else if (amount >= 1) {
-    elem.classList.add('card--little');
+    element.classList.add('card--little');
   } else {
-    elem.classList.add('card--soon');
+    element.classList.add('card--soon');
   }
 };
 
-var setClassAccordingToIsSugar = function (isSugar, elem) {
+var setClassAccordingToIsSugar = function (isSugar, element) {
   if (isSugar) {
-    elem.querySelector('.card__characteristic').textContent = 'Содержит сахар';
+    element.querySelector('.card__characteristic').textContent = 'Содержит сахар';
   } else {
-    elem.querySelector('.card__characteristic').textContent = 'Без сахара';
+    element.querySelector('.card__characteristic').textContent = 'Без сахара';
   }
 };
 
@@ -167,22 +167,11 @@ var appendCatalogCards = function (cards) {
   catalogCardsElement.appendChild(fragmentCatalogCards);
 };
 
-// var appendGoodCards = function (cards) {
-//   var fragmentGoodCards = document.createDocumentFragment();
-//   cards.forEach(function (card) {
-//     fragmentGoodCards.appendChild(renderGoodCard(card));
-//   });
-//   goodCardsElement.appendChild(fragmentGoodCards);
-// };
-
 var catalogCards = generateCards(CATALOG_CARD_AMOUNT);
-// var goodCards = generateCards(GOOD_CARD_AMOUNT);
 
 appendCatalogCards(catalogCards);
-// appendGoodCards(goodCards);
 
 goodCardsElement.classList.remove('goods__cards--empty');
-// document.querySelector('.goods__card-empty').classList.add('visually-hidden');
 catalogCardsElement.classList.remove('catalog__cards--load');
 document.querySelector('.catalog__load').classList.add('visually-hidden');
 
@@ -192,41 +181,34 @@ var catalogCardElements = document.querySelectorAll('.catalog__card');
 var catalogCardsWrap = document.querySelector('.catalog__cards-wrap');
 var goodsCardEmptyElement = document.querySelector('.goods__card-empty');
 var goodsPriceElement = document.querySelector('.goods__price');
+var goodsTotalElement = document.querySelector('.goods__total');
 
 // содержится ли хоть один товар в корзине
-var checkIsEmptyBasket = function (elem) {
-  return elem.contains(elem.querySelector('article'));
+var checkIsEmptyBasket = function (element) {
+  return element.contains(element.querySelector('article'));
 };
 
-/*
-* У меня в данном случае с toggle реализовать не получилось...
-* если я оставлю (!isEmpty) {elem.classList.toggle('visually-hidden')},
-* то когда товар в корзине появился - (!isEmpty) ---> false и
-* ничего не произойдет
-* */
 var changeTextForBasket = function (isEmpty) {
   if (!isEmpty) {
     goodsCardEmptyElement.classList.remove('visually-hidden');
-    document.querySelector('.goods__total').classList.add('visually-hidden');
+    goodsTotalElement.classList.add('visually-hidden');
   } else {
     goodsCardEmptyElement.classList.add('visually-hidden');
-    document.querySelector('.goods__total').classList.remove('visually-hidden');
+    goodsTotalElement.classList.remove('visually-hidden');
   }
 };
 
-var checkIsClickFeature = function (evt, cls) {
-  return evt.classList.contains(cls);
+var checkIsClickFeature = function (evt, className) {
+  return evt.classList.contains(className);
 };
 
-var changeFeatureForGood = function (isFeature, evt, cls) {
+var changeFeatureForGood = function (isFeature, evt, className) {
   if (isFeature) {
-    evt.classList.toggle(cls);
+    evt.classList.toggle(className);
   }
 };
 
 var changeSignForInputValue = function (evt, sign) {
-  // когда в переменную пишу ----evt.querySelector('.card-order__count').value---
-  // он пишет, что переменная нигде не используется...
   var cardOrderCountEvt = evt.querySelector('.card-order__count');
   var cardOrderPriceEvt = evt.querySelector('.card-order__price');
 
@@ -320,6 +302,74 @@ var countTotalSumElement = function (elem) {
   return parseFloat(elem.querySelector('.card-order__price').textContent) * elem.querySelector('.card-order__count').value;
 };
 
+var checkIsNumeric = function (value) {
+  return !isNaN(parseFloat(value)) && isFinite(value);
+};
+
+// в задании написано только про проверку номера, я добавил немного от себя с проверками других полей
+var checkRightField = function (evt) {
+  var sum = 0;
+
+  switch (evt) {
+    case (document.querySelector('#payment__card-number')):
+      var targetValuesNumber = evt.value.split('');
+      for (var i = 0; i < targetValuesNumber.length; i++) {
+        var targetValueNumber = parseFloat(targetValuesNumber[i]);
+        if (i % 2 === 0) {
+          if (targetValueNumber * 2 >= 10) {
+            sum += (targetValueNumber * 2) - 9;
+          } else {
+            sum += targetValueNumber * 2;
+          }
+        } else {
+          sum += targetValueNumber;
+        }
+      }
+      if (sum % 10 !== 0) {
+        evt.setCustomValidity('введённый номер неверен');
+      } else if (targetValuesNumber.length !== 16) {
+        evt.setCustomValidity('номер карты должен состоять из 16 цифр.');
+      } else {
+        evt.setCustomValidity('');
+        return true;
+      }
+      break;
+    case (document.querySelector('#payment__card-date')):
+      var targetValuesDate = evt.value.split('/');
+      if (!targetValuesDate[0] || targetValuesDate[0].length !== 2 || !checkIsNumeric(targetValuesDate[0])) {
+        evt.setCustomValidity('месяц не корректен');
+      } else if (targetValuesDate[0] === '00' || targetValuesDate[0] > 12) {
+        evt.setCustomValidity('месяц не корректен. Месяц должен быть в диапазоне от 01 до 12');
+      } else if (!targetValuesDate[1] || targetValuesDate[1].length !== 2 || !checkIsNumeric(targetValuesDate[1])) {
+        evt.setCustomValidity('год не корректен');
+      } else {
+        evt.setCustomValidity('');
+        return true;
+      }
+      break;
+    case (document.querySelector('#payment__card-cvc')):
+      if (!checkIsNumeric(evt.value)) {
+        evt.setCustomValidity('cvc не корректен. Он должен содержать только цифры');
+      } else if (evt.value.length !== 3) {
+        evt.setCustomValidity('cvc не корректен. Он должен содержать только 3 цифры');
+      } else {
+        evt.setCustomValidity('');
+        return true;
+      }
+      break;
+    case (document.querySelector('#payment__cardholder')):
+      var targetCardHolder = evt.value.split(' ');
+      if (!targetCardHolder[0] || !targetCardHolder[1]) {
+        evt.setCustomValidity('Введены не все данные');
+      } else {
+        evt.setCustomValidity('');
+        return true;
+      }
+      break;
+  }
+  return false;
+};
+
 for (var i = 0; i < catalogCardElements.length; i++) {
   catalogCardElements[i].addEventListener('click', function (evt) {
     evt.preventDefault();
@@ -401,4 +451,18 @@ document.querySelector('.catalog__sidebar').addEventListener('click', function (
   }
 
   catalogCardsWrap.insertBefore(catalogCardsElement, catalogCardsWrap.firstChild);
+});
+
+document.querySelector('.payment').addEventListener('input', function (evt) {
+  var target = evt.target;
+
+  if (target.tagName !== 'INPUT') {
+    return;
+  }
+
+  if (checkRightField(target)) {
+    document.querySelector('.payment__card-status').textContent = 'Одобрен';
+  } else {
+    document.querySelector('.payment__card-status').textContent = 'Неизвестен';
+  }
 });
