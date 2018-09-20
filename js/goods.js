@@ -466,3 +466,88 @@ document.querySelector('.payment').addEventListener('input', function (evt) {
     document.querySelector('.payment__card-status').textContent = 'Неизвестен';
   }
 });
+
+// ---------------------- Личный проект: максимум подвижности -----------------------
+
+var rangeBtnLeftElement = document.querySelector('.range__btn--left');
+var rangeBtnRightElement = document.querySelector('.range__btn--right');
+var rangeFillLineElement = document.querySelector('.range__fill-line');
+var rangeFilterElement = document.querySelector('.range__filter');
+
+var getCoordsElement = function (element) {
+  var box = element.getBoundingClientRect();
+  return {
+    coordXLeft: box.left + window.pageXOffset,
+    coordXRight: box.right + window.pageXOffset,
+    width: box.width
+  };
+};
+
+document.querySelector('.range__filter').addEventListener('mousedown', function (evt) {
+  evt.preventDefault();
+
+  if (evt.target.tagName !== 'BUTTON') {
+    return;
+  }
+
+  var startCoord = {
+    x: evt.clientX
+  };
+
+  evt.target.style.zIndex = 9999;
+
+  var onButtonMousemove = function (evtMousemove) {
+    var coordsRangeBtnLeftElement = getCoordsElement(rangeBtnLeftElement);
+    var coordsRangeBtnRightElement = getCoordsElement(rangeBtnRightElement);
+    var coordsRangeFilterElement = getCoordsElement(rangeFilterElement);
+
+    var shift = {
+      x: startCoord.x - evtMousemove.clientX
+    };
+
+    startCoord = {
+      x: evtMousemove.clientX
+    };
+
+    var newCoordsBtn = {
+      left: coordsRangeBtnLeftElement.coordXLeft - shift.x - coordsRangeFilterElement.coordXLeft,
+      right: coordsRangeBtnRightElement.coordXLeft - shift.x - coordsRangeFilterElement.coordXLeft
+    };
+
+    if (newCoordsBtn.left <= 0) {
+      newCoordsBtn.left = 0;
+    }
+
+    if (newCoordsBtn.left >= coordsRangeBtnRightElement.coordXLeft - coordsRangeFilterElement.coordXLeft - coordsRangeBtnRightElement.width) {
+      newCoordsBtn.left = coordsRangeBtnRightElement.coordXLeft - coordsRangeFilterElement.coordXLeft - coordsRangeBtnRightElement.width;
+    }
+
+    if (newCoordsBtn.right >= coordsRangeFilterElement.width - coordsRangeBtnRightElement.width) {
+      newCoordsBtn.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width;
+    }
+
+    if (newCoordsBtn.right <= coordsRangeBtnLeftElement.coordXLeft - coordsRangeFilterElement.coordXLeft + coordsRangeBtnRightElement.width) {
+      newCoordsBtn.right = coordsRangeBtnLeftElement.coordXLeft - coordsRangeFilterElement.coordXLeft + coordsRangeBtnRightElement.width;
+    }
+
+    if (checkIsClickFeature(evt.target, 'range__btn--left')) {
+      rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
+      rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
+    }
+
+    if (checkIsClickFeature(evt.target, 'range__btn--right')) {
+      rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
+      rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
+    }
+  };
+
+  var onButtonMouseup = function () {
+    document.removeEventListener('mousemove', onButtonMousemove);
+    document.removeEventListener('mouseup', onButtonMouseup);
+  };
+
+  document.addEventListener('mousemove', onButtonMousemove);
+  document.addEventListener('mouseup', onButtonMouseup);
+
+});
+
