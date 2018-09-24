@@ -600,11 +600,13 @@ document.querySelector('.range__filter').addEventListener('mousedown', function 
     if (checkIsClickFeature(evt.target, 'range__btn--left')) {
       rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
       rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
+      document.querySelector('.range__price--min').textContent = Math.floor(newCoordsBtn.left);
     }
 
     if (checkIsClickFeature(evt.target, 'range__btn--right')) {
       rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
       rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
+      document.querySelector('.range__price--max').textContent = Math.floor(newCoordsBtn.right);
     }
   };
 
@@ -626,9 +628,11 @@ document.querySelector('.range__filter').addEventListener('mousedown', function 
     if (evtMouseup.target === rangeBtnLeftElement && shift.x === 0) {
       rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
       rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
+      document.querySelector('.range__price--min').textContent = Math.floor(newCoordsBtn.left);
     } else if (evtMouseup.target === rangeBtnRightElement && shift.x === 0) {
       rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
       rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
+      document.querySelector('.range__price--max').textContent = Math.floor(newCoordsBtn.right);
     }
     document.removeEventListener('mousemove', onButtonMousemove);
     document.removeEventListener('mouseup', onButtonMouseup);
