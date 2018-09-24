@@ -182,10 +182,10 @@ var goodsCardEmptyElement = document.querySelector('.goods__card-empty');
 var goodsPriceElement = document.querySelector('.goods__price');
 var goodsTotalElement = document.querySelector('.goods__total');
 
-var changeBlockFields = function (element, boolean) {
+var changeBlockFields = function (element, attribute, boolean) {
   var inputs = element.querySelectorAll('input');
   for (var i = 0; i < inputs.length; i++) {
-    inputs[i].disabled = boolean;
+    inputs[i][attribute] = boolean;
   }
 };
 
@@ -226,13 +226,16 @@ var changeGoodAmount = function (target, currentTarget, value) {
 
 var changeTextForBasket = function (isEmpty) {
   if (!isEmpty) {
-    changeBlockFields(document.querySelector('.order'), true);
+    changeBlockFields(document.querySelector('.order'), 'disabled', true);
+    changeBlockFields(document.querySelector('.order'), 'required', false);
     goodsCardEmptyElement.classList.remove('visually-hidden');
     goodsTotalElement.classList.add('visually-hidden');
+    return true;
   } else {
-    changeBlockFields(document.querySelector('.order'), false);
+    changeBlockFields(document.querySelector('.order'), 'disabled', false);
     goodsCardEmptyElement.classList.add('visually-hidden');
     goodsTotalElement.classList.remove('visually-hidden');
+    return false;
   }
 };
 
@@ -331,8 +334,36 @@ var findParentElement = function (target, currentEvt) {
   return target;
 };
 
+var getGoodsAmount = function (element) {
+  var goodsAmount = 0;
+  for (var j = 0; j < element.length; j++) {
+    goodsAmount++;
+  }
+  return goodsAmount;
+};
+
 var getGoodsAmountInBasket = function (goods) {
-  return goods.length + 1;
+  return goods.length;
+};
+
+// не совсем совершенен способ получения окончания (от 11 - 19 не работает при таком способе)
+var getRightString = function (element) {
+  element = element.length.toString();
+  var string = '';
+  switch (element[element.length - 1]) {
+    case '1':
+      string = 'товар';
+      break;
+    case '2':
+    case '3':
+    case '4':
+      string = 'товара';
+      break;
+    default:
+      string = 'товаров';
+      break;
+  }
+  return string;
 };
 
 var getSumElement = function (target, currentTarget) {
@@ -382,19 +413,31 @@ var setGoodsAmountInBasket = function (target, currentTarget) {
   return true;
 };
 
+var setRequaredForInputs = function (elements, boolean) {
+  for (var j = 0; j < elements.length; j++) {
+    elements[j].required = boolean;
+  }
+};
+
 var setTotalSumItems = function (elem) {
   return parseFloat(elem.querySelector('.card-order__price').textContent) * elem.querySelector('.card-order__count').value;
 };
 
+var setTotalGoodsAmount = function (element) {
+  var goodsAmount = getGoodsAmount(element);
+  var stringRight = getRightString(element);
+  document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + goodsAmount + ' ' + stringRight + ':';
+  document.querySelector('.main-header__basket').textContent = 'В корзине ' + goodsAmount + ' ' + stringRight;
+};
+
 // изначально корзина пуста, значит все поля блокируем
-changeBlockFields(document.querySelector('.order'), 'input', true);
+changeBlockFields(document.querySelector('.order'), 'disabled', true);
 
 for (var i = 0; i < catalogCardElements.length; i++) {
   catalogCardElements[i].addEventListener('click', function (evt) {
     evt.preventDefault();
     var target = evt.target;
     var currentTarget = evt.currentTarget;
-    var goodCardsElements = goodCardsElement.querySelectorAll('article');
 
     if (checkIsClickFeature(target, 'card__btn-favorite')) {
       changeFeatureForGood(target, 'card__btn-favorite--selected', 'card__btn-favorite');
@@ -416,11 +459,14 @@ for (var i = 0; i < catalogCardElements.length; i++) {
 
     if (setGoodsAmountInBasket(target, currentTarget)) {
       goodCardsElement.appendChild(renderGoodCard(goodCard));
+      // в параметрах не использую переменную потому что на момент, когда товар добавляю в корзину его еще нет.
+      // А поиск коллекции прямо в параметре дает правильный результат
+      document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article')) + ':';
     }
 
     if (!changeTextForBasket(checkIsEmptyBasket(goodCardsElement))) {
-      document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + getGoodsAmountInBasket(goodCardsElements) + ' товаров:';
       document.querySelector('.goods__price').textContent = parseFloat(document.querySelector('.goods__price').textContent) + getSumElement(target, currentTarget) + ' ₽';
+      document.querySelector('.main-header__basket').textContent = 'В корзине ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article'));
     }
   });
 }
@@ -434,6 +480,7 @@ goodCardsElement.addEventListener('click', function (evt) {
     target.parentNode.remove();
     var parentTarget = findParentElement(target, currentTarget);
     goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) - setTotalSumItems(parentTarget) + ' ₽';
+    setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
   }
 
   if (target.tagName === 'BUTTON' && checkIsClickFeature(target, 'card-order__btn--increase')) {
@@ -442,7 +489,11 @@ goodCardsElement.addEventListener('click', function (evt) {
     changeGoodAmount(target, currentTarget, -1);
   }
 
-  changeTextForBasket(checkIsEmptyBasket(goodCardsElement));
+  if (!changeTextForBasket(checkIsEmptyBasket(goodCardsElement))) {
+    setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
+  } else {
+    document.querySelector('.main-header__basket').textContent = 'В корзине ничего нет';
+  }
 });
 
 document.querySelector('.catalog__sidebar').addEventListener('click', function (evt) {
@@ -577,7 +628,7 @@ document.querySelector('.range__filter').addEventListener('mousedown', function 
       rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
     } else if (evtMouseup.target === rangeBtnRightElement && shift.x === 0) {
       rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
-      rangeFillLineElement.style.left = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
+      rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
     }
     document.removeEventListener('mousemove', onButtonMousemove);
     document.removeEventListener('mouseup', onButtonMouseup);
@@ -600,16 +651,29 @@ document.querySelector('.deliver__store-list').addEventListener('click', functio
   currentTarget.querySelector('#' + target.htmlFor).checked = true;
 });
 
+var setFeatureForInputs = function (target) {
+  var paymentInputs = document.querySelectorAll('.payment__inputs input');
+  var deliverAddress = document.querySelectorAll('.deliver__address-entry-fields input');
+
+  var fieldLabels = {
+    'payment__card': [paymentInputs, true],
+    'payment__cash': [paymentInputs, false],
+    'deliver__courier': [deliverAddress, true],
+    'deliver__store': [deliverAddress, false]
+  };
+
+  for (var key in fieldLabels) {
+    if (target.htmlFor === key && checkIsEmptyBasket(goodCardsElement)) {
+      setRequaredForInputs(fieldLabels[key][0], fieldLabels[key][1]);
+    }
+  }
+};
+
 document.querySelector('.buy').addEventListener('click', function (evt) {
-  changeFields(evt.target);
+  var target = evt.target;
+
+  changeFields(target);
+  setFeatureForInputs(target);
 });
 
 
-/*
-Не сделал еще из ТЗ:
-1 пункт - не до конца
-2. фильтрация полностью
-  2.3 пункт не полностью понятен - какую цену нужно выставлять, границы от и до
-3. показ избранного... полностью
-Остальное вроде все просмотрел
-*/
