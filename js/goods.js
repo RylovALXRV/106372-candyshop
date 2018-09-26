@@ -12,7 +12,6 @@ var pictures = [];
 var names = [];
 
 var CATALOG_CARD_AMOUNT = 26;
-// var GOOD_CARD_AMOUNT = 3;
 
 var GoodFeature = {
   NAME: ['Чесночные сливки', 'Огуречный педант', 'Молочная хрюша', 'Грибной шейк', 'Баклажановое безумие', 'Паприколу итальяно',
@@ -183,123 +182,78 @@ var goodsCardEmptyElement = document.querySelector('.goods__card-empty');
 var goodsPriceElement = document.querySelector('.goods__price');
 var goodsTotalElement = document.querySelector('.goods__total');
 
-// содержится ли хоть один товар в корзине
-var checkIsEmptyBasket = function (element) {
-  return element.contains(element.querySelector('article'));
+var changeBlockFields = function (element, attribute, boolean) {
+  var inputs = element.querySelectorAll('input');
+  for (var i = 0; i < inputs.length; i++) {
+    inputs[i][attribute] = boolean;
+  }
+};
+
+// пришел к такому решению...
+var changeFields = function (target) {
+  var selector = {
+    'payment__cash-wrap': 'payment__card-wrap',
+    'payment__card-wrap': 'payment__cash-wrap',
+    'deliver__store': 'deliver__courier',
+    'deliver__courier': 'deliver__store'
+  };
+
+  for (var key in selector) {
+    if (~key.indexOf(target.htmlFor)) {
+      document.querySelector('#' + target.htmlFor).checked = true;
+      document.querySelector('.' + selector[key]).classList.add('visually-hidden');
+      document.querySelector('.' + key).classList.remove('visually-hidden');
+    }
+  }
+};
+
+var changeFeatureForGood = function (target, className) {
+  target.classList.toggle(className);
+};
+
+var changeGoodAmount = function (target, currentTarget, value) {
+  while (target.tagName !== currentTarget) {
+    if (target.tagName === 'ARTICLE') {
+      changeValueFields(target, value);
+      if (parseFloat(target.querySelector('.card-order__count').value) <= 0) {
+        target.remove();
+      }
+      return;
+    }
+    target = target.parentNode;
+  }
 };
 
 var changeTextForBasket = function (isEmpty) {
   if (!isEmpty) {
+    changeBlockFields(document.querySelector('.order'), 'disabled', true);
+    changeBlockFields(document.querySelector('.order'), 'required', false);
     goodsCardEmptyElement.classList.remove('visually-hidden');
     goodsTotalElement.classList.add('visually-hidden');
+    return true;
   } else {
+    changeBlockFields(document.querySelector('.order'), 'disabled', false);
     goodsCardEmptyElement.classList.add('visually-hidden');
     goodsTotalElement.classList.remove('visually-hidden');
+    return false;
   }
 };
 
-var checkIsClickFeature = function (evt, className) {
-  return evt.classList.contains(className);
+var changeValueFields = function (target, value) {
+  var cardOrderCount = target.querySelector('.card-order__count');
+  var cardOrderPrice = target.querySelector('.card-order__price');
+
+  cardOrderCount.value = parseFloat(cardOrderCount.value) + value;
+  goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + value * parseFloat(cardOrderPrice.textContent) + ' ₽';
 };
 
-var changeFeatureForGood = function (isFeature, evt, className) {
-  if (isFeature) {
-    evt.classList.toggle(className);
-  }
+var checkIsClickFeature = function (target, className) {
+  return target.classList.contains(className);
 };
 
-var changeSignForInputValue = function (evt, sign) {
-  var cardOrderCountEvt = evt.querySelector('.card-order__count');
-  var cardOrderPriceEvt = evt.querySelector('.card-order__price');
-
-  switch (sign) {
-    case '+':
-      cardOrderCountEvt.value = parseFloat(cardOrderCountEvt.value) + 1;
-      goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + parseFloat(cardOrderPriceEvt.textContent) + ' ₽';
-      return;
-    case '-':
-      cardOrderCountEvt.value = parseFloat(cardOrderCountEvt.value) - 1;
-      goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) - parseFloat(cardOrderPriceEvt.textContent) + ' ₽';
-      return;
-  }
-};
-
-var changeAmountGood = function (evt, currentEvt, sign) {
-  while (evt.tagName !== currentEvt) {
-    if (evt.tagName === 'ARTICLE') {
-      changeSignForInputValue(evt, sign);
-      if (parseFloat(evt.querySelector('.card-order__count').value) <= 0) {
-        evt.remove();
-      }
-      return;
-    }
-    evt = evt.parentNode;
-  }
-};
-
-var findParentElement = function (evt, currentEvt) {
-  while (evt.tagName !== currentEvt) {
-    if (evt.tagName === 'ARTICLE') {
-      break;
-    }
-    evt = evt.parentNode;
-  }
-  return evt;
-};
-
-var sortByRating = function (a, b) {
-  return b.rating - a.rating;
-};
-
-var sortByBigToSmallPrice = function (a, b) {
-  return b.expensive - a.expensive;
-};
-
-var sortBySmallToBigPrice = function (a, b) {
-  return a.cheep - b.cheep;
-};
-
-var sortByPopular = function (a, b) {
-  return a.elem.dataset.id - b.elem.dataset.id;
-};
-
-var sortByFeature = function (evt, arr) {
-  switch (evt) {
-    case 'rating':
-      arr.sort(sortByRating);
-      return;
-    case 'cheep':
-      arr.sort(sortBySmallToBigPrice);
-      return;
-    case 'expensive':
-      arr.sort(sortByBigToSmallPrice);
-      return;
-    case 'popular':
-      arr.sort(sortByPopular);
-  }
-};
-
-var countGoodsInBasket = function (goods) {
-  return goods.length + 1;
-};
-
-var getSumElement = function (evt, currentTarget) {
-  return parseFloat(findParentElement(evt, currentTarget).querySelector('.card__price').firstChild.data);
-};
-
-var getContentBasket = function (evt, currentTarget) {
-  var goodCardsElements = goodCardsElement.querySelectorAll('article');
-  for (var j = 0; j < goodCardsElements.length; j++) {
-    if (goodCardsElements && currentTarget.dataset.id === goodCardsElements[j].dataset.cardId) {
-      goodCardsElements[j].querySelector('.card-order__count').value = parseFloat(goodCardsElements[j].querySelector('.card-order__count').value) + 1;
-      return false;
-    }
-  }
-  return true;
-};
-
-var countTotalSumElement = function (elem) {
-  return parseFloat(elem.querySelector('.card-order__price').textContent) * elem.querySelector('.card-order__count').value;
+// содержится ли хоть один товар в корзине
+var checkIsEmptyBasket = function (element) {
+  return element.contains(element.querySelector('article'));
 };
 
 var checkIsNumeric = function (value) {
@@ -370,15 +324,127 @@ var checkRightField = function (evt) {
   return false;
 };
 
+var findParentElement = function (target, currentEvt) {
+  while (target.tagName !== currentEvt) {
+    if (target.tagName === 'ARTICLE') {
+      break;
+    }
+    target = target.parentNode;
+  }
+  return target;
+};
+
+var getGoodsAmount = function (element) {
+  var goodsAmount = 0;
+  for (var j = 0; j < element.length; j++) {
+    goodsAmount++;
+  }
+  return goodsAmount;
+};
+
+var getGoodsAmountInBasket = function (goods) {
+  return goods.length;
+};
+
+// не совсем совершенен способ получения окончания (от 11 - 19 не работает при таком способе)
+var getRightString = function (element) {
+  element = element.length.toString();
+  var string = '';
+  switch (element[element.length - 1]) {
+    case '1':
+      string = 'товар';
+      break;
+    case '2':
+    case '3':
+    case '4':
+      string = 'товара';
+      break;
+    default:
+      string = 'товаров';
+      break;
+  }
+  return string;
+};
+
+var getSumElement = function (target, currentTarget) {
+  return parseFloat(findParentElement(target, currentTarget).querySelector('.card__price').firstChild.data);
+};
+
+var sortByBigToSmallPrice = function (a, b) {
+  return b.expensive - a.expensive;
+};
+
+var sortByPopular = function (a, b) {
+  return a.elem.dataset.id - b.elem.dataset.id;
+};
+
+var sortByRating = function (a, b) {
+  return b.rating - a.rating;
+};
+
+var sortBySmallToBigPrice = function (a, b) {
+  return a.cheep - b.cheep;
+};
+
+var sortByFeature = function (evt, arr) {
+  switch (evt) {
+    case 'rating':
+      arr.sort(sortByRating);
+      return;
+    case 'cheep':
+      arr.sort(sortBySmallToBigPrice);
+      return;
+    case 'expensive':
+      arr.sort(sortByBigToSmallPrice);
+      return;
+    case 'popular':
+      arr.sort(sortByPopular);
+  }
+};
+
+var setGoodsAmountInBasket = function (target, currentTarget) {
+  var goodCardsElements = goodCardsElement.querySelectorAll('article');
+  for (var i = 0; i < goodCardsElements.length; i++) {
+    if (goodCardsElements && currentTarget.dataset.id === goodCardsElements[i].dataset.cardId) {
+      goodCardsElements[i].querySelector('.card-order__count').value = parseFloat(goodCardsElements[i].querySelector('.card-order__count').value) + 1;
+      return false;
+    }
+  }
+  return true;
+};
+
+var setRequaredForInputs = function (elements, boolean) {
+  for (var j = 0; j < elements.length; j++) {
+    elements[j].required = boolean;
+  }
+};
+
+var setTotalSumItems = function (elem) {
+  return parseFloat(elem.querySelector('.card-order__price').textContent) * elem.querySelector('.card-order__count').value;
+};
+
+var setTotalGoodsAmount = function (element) {
+  var goodsAmount = getGoodsAmount(element);
+  var stringRight = getRightString(element);
+  document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + goodsAmount + ' ' + stringRight + ':';
+  document.querySelector('.main-header__basket').textContent = 'В корзине ' + goodsAmount + ' ' + stringRight;
+};
+
+// изначально корзина пуста, значит все поля блокируем
+changeBlockFields(document.querySelector('.order'), 'disabled', true);
+
 for (var i = 0; i < catalogCardElements.length; i++) {
   catalogCardElements[i].addEventListener('click', function (evt) {
     evt.preventDefault();
     var target = evt.target;
     var currentTarget = evt.currentTarget;
-    var goodCardsElements = goodCardsElement.querySelectorAll('article');
 
-    changeFeatureForGood(checkIsClickFeature(target, 'card__btn-favorite'), target, 'card__btn-favorite--selected');
-    changeFeatureForGood(checkIsClickFeature(target, 'card__btn-composition'), currentTarget.querySelector('.card__composition'), 'card__composition--hidden');
+    if (checkIsClickFeature(target, 'card__btn-favorite')) {
+      changeFeatureForGood(target, 'card__btn-favorite--selected', 'card__btn-favorite');
+    }
+    if (checkIsClickFeature(target, 'card__btn-composition')) {
+      changeFeatureForGood(currentTarget.querySelector('.card__composition'), 'card__composition--hidden', 'card__btn-composition');
+    }
 
     if (!target.classList.contains('card__btn')) {
       return;
@@ -391,14 +457,16 @@ for (var i = 0; i < catalogCardElements.length; i++) {
       id: currentTarget.dataset.id
     };
 
-
-    if (getContentBasket(target, currentTarget)) {
+    if (setGoodsAmountInBasket(target, currentTarget)) {
       goodCardsElement.appendChild(renderGoodCard(goodCard));
+      // в параметрах не использую переменную потому что на момент, когда товар добавляю в корзину его еще нет.
+      // А поиск коллекции прямо в параметре дает правильный результат
+      document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article')) + ':';
     }
 
     if (!changeTextForBasket(checkIsEmptyBasket(goodCardsElement))) {
-      document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + countGoodsInBasket(goodCardsElements) + ' товаров';
       document.querySelector('.goods__price').textContent = parseFloat(document.querySelector('.goods__price').textContent) + getSumElement(target, currentTarget) + ' ₽';
+      document.querySelector('.main-header__basket').textContent = 'В корзине ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article'));
     }
   });
 }
@@ -411,16 +479,21 @@ goodCardsElement.addEventListener('click', function (evt) {
   if (target.tagName === 'A' && target.classList.contains('card-order__close')) {
     target.parentNode.remove();
     var parentTarget = findParentElement(target, currentTarget);
-    goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) - countTotalSumElement(parentTarget) + ' ₽';
+    goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) - setTotalSumItems(parentTarget) + ' ₽';
+    setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
   }
 
   if (target.tagName === 'BUTTON' && checkIsClickFeature(target, 'card-order__btn--increase')) {
-    changeAmountGood(target, currentTarget, '+');
+    changeGoodAmount(target, currentTarget, 1);
   } else if (target.tagName === 'BUTTON' && checkIsClickFeature(target, 'card-order__btn--decrease')) {
-    changeAmountGood(target, currentTarget, '-');
+    changeGoodAmount(target, currentTarget, -1);
   }
 
-  changeTextForBasket(checkIsEmptyBasket(goodCardsElement));
+  if (!changeTextForBasket(checkIsEmptyBasket(goodCardsElement))) {
+    setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
+  } else {
+    document.querySelector('.main-header__basket').textContent = 'В корзине ничего нет';
+  }
 });
 
 document.querySelector('.catalog__sidebar').addEventListener('click', function (evt) {
@@ -466,3 +539,166 @@ document.querySelector('.payment').addEventListener('input', function (evt) {
     document.querySelector('.payment__card-status').textContent = 'Неизвестен';
   }
 });
+
+// ---------------------- Личный проект: максимум подвижности -----------------------
+
+var rangeBtnLeftElement = document.querySelector('.range__btn--left');
+var rangeBtnRightElement = document.querySelector('.range__btn--right');
+var rangeFillLineElement = document.querySelector('.range__fill-line');
+var rangeFilterElement = document.querySelector('.range__filter');
+var rangePriceMax = document.querySelector('.range__price--max');
+var rangePriceMin = document.querySelector('.range__price--min');
+
+
+var getCoordsElement = function (element) {
+  var box = element.getBoundingClientRect();
+  return {
+    coordXLeft: box.left + window.pageXOffset,
+    coordXRight: box.right + window.pageXOffset,
+    width: box.width
+  };
+};
+
+var setFeatureForInputs = function (target) {
+  var paymentInputs = document.querySelectorAll('.payment__inputs input');
+  var deliverAddress = document.querySelectorAll('.deliver__address-entry-fields input');
+
+  var fieldLabels = {
+    'payment__card': [paymentInputs, true],
+    'payment__cash': [paymentInputs, false],
+    'deliver__courier': [deliverAddress, true],
+    'deliver__store': [deliverAddress, false]
+  };
+
+  for (var key in fieldLabels) {
+    if (target.htmlFor === key && checkIsEmptyBasket(goodCardsElement)) {
+      setRequaredForInputs(fieldLabels[key][0], fieldLabels[key][1]);
+    }
+  }
+};
+
+rangeFilterElement.insertBefore(rangeFillLineElement, rangeFilterElement.firstChild);
+
+rangeFilterElement.addEventListener('mousedown', function (evt) {
+  evt.preventDefault();
+
+  var startCoord = {
+    x: evt.clientX
+  };
+
+  var shiftBtn = {};
+
+  var onButtonMousemove = function (evtMousemove) {
+    var coordsRangeBtnLeftElement = getCoordsElement(rangeBtnLeftElement);
+    var coordsRangeBtnRightElement = getCoordsElement(rangeBtnRightElement);
+    var coordsRangeFilterElement = getCoordsElement(rangeFilterElement);
+
+    // найдем изначальный сдвиг курсора для пинов
+    shiftBtn.left = startCoord.x - coordsRangeBtnLeftElement.coordXLeft;
+    shiftBtn.right = startCoord.x - coordsRangeBtnRightElement.coordXLeft;
+
+    var shift = {
+      x: startCoord.x - evtMousemove.clientX
+    };
+
+    startCoord = {
+      x: evtMousemove.clientX
+    };
+
+    var newCoordsBtn = {
+      left: coordsRangeBtnLeftElement.coordXLeft - shift.x - coordsRangeFilterElement.coordXLeft,
+      right: coordsRangeBtnRightElement.coordXLeft - shift.x - coordsRangeFilterElement.coordXLeft
+    };
+
+    if (newCoordsBtn.left <= 0) {
+      newCoordsBtn.left = 0;
+    }
+
+    if (newCoordsBtn.left >= coordsRangeBtnRightElement.coordXLeft - coordsRangeFilterElement.coordXLeft - coordsRangeBtnRightElement.width) {
+      newCoordsBtn.left = coordsRangeBtnRightElement.coordXLeft - coordsRangeFilterElement.coordXLeft - coordsRangeBtnRightElement.width;
+    }
+
+    if (newCoordsBtn.right >= coordsRangeFilterElement.width - coordsRangeBtnRightElement.width) {
+      newCoordsBtn.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width;
+    }
+
+    if (newCoordsBtn.right <= coordsRangeBtnLeftElement.coordXLeft - coordsRangeFilterElement.coordXLeft + coordsRangeBtnRightElement.width) {
+      newCoordsBtn.right = coordsRangeBtnLeftElement.coordXLeft - coordsRangeFilterElement.coordXLeft + coordsRangeBtnRightElement.width;
+    }
+
+    if (checkIsClickFeature(evt.target, 'range__btn--left')) {
+      rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
+      rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
+      rangePriceMin.textContent = Math.floor(newCoordsBtn.left);
+    }
+
+    if (checkIsClickFeature(evt.target, 'range__btn--right')) {
+      rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
+      rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
+      rangePriceMax.textContent = Math.floor(newCoordsBtn.right);
+    }
+  };
+
+  var onButtonMouseup = function (evtMouseup) {
+    var coordsRangeBtnLeftElement = getCoordsElement(rangeBtnLeftElement);
+    var coordsRangeBtnRightElement = getCoordsElement(rangeBtnRightElement);
+    var coordsRangeFilterElement = getCoordsElement(rangeFilterElement);
+
+    var newCoordsBtn = {
+      left: coordsRangeBtnLeftElement.coordXLeft - coordsRangeFilterElement.coordXLeft,
+      right: coordsRangeBtnRightElement.coordXLeft - coordsRangeFilterElement.coordXLeft
+    };
+
+    var MIN_VALUE = 0;
+
+    // shiftBtn.left < 0 - использую, чтобы при перемещении правого пина левее левого, левый получил нужные координаты
+    // и передвинулся на новое положение, и наоборот
+    shiftBtn.left = isNaN(shiftBtn.left) || shiftBtn.left < MIN_VALUE ? MIN_VALUE : shiftBtn.left;
+    shiftBtn.right = isNaN(shiftBtn.right) || shiftBtn.right > coordsRangeBtnRightElement.width ? MIN_VALUE : shiftBtn.right;
+
+    if (evtMouseup.clientX < (coordsRangeBtnRightElement.coordXLeft + coordsRangeBtnLeftElement.coordXLeft) / 2) {
+      newCoordsBtn.left = evtMouseup.clientX - coordsRangeFilterElement.coordXLeft - shiftBtn.left;
+      if (newCoordsBtn.left <= 0) {
+        newCoordsBtn.left = 0;
+      }
+      rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
+      rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
+      rangePriceMin.textContent = Math.floor(newCoordsBtn.left);
+    } else {
+      newCoordsBtn.right = evtMouseup.clientX - coordsRangeFilterElement.coordXLeft - shiftBtn.right;
+      if (newCoordsBtn.right >= coordsRangeFilterElement.width - coordsRangeBtnRightElement.width) {
+        newCoordsBtn.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width;
+      }
+      rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
+      rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
+      rangePriceMax.textContent = Math.floor(newCoordsBtn.right);
+    }
+    document.removeEventListener('mousemove', onButtonMousemove);
+    document.removeEventListener('mouseup', onButtonMouseup);
+  };
+
+  document.addEventListener('mousemove', onButtonMousemove);
+  document.addEventListener('mouseup', onButtonMouseup);
+});
+
+document.querySelector('.deliver__store-list').addEventListener('click', function (evt) {
+  evt.preventDefault();
+  var target = evt.target;
+  var currentTarget = evt.currentTarget;
+
+  if (target.tagName !== 'LABEL') {
+    return;
+  }
+
+  document.querySelector('.deliver__store-map-img').src = 'img/map/' + currentTarget.querySelector('#' + target.htmlFor).value + '.jpg';
+  currentTarget.querySelector('#' + target.htmlFor).checked = true;
+});
+
+document.querySelector('.buy').addEventListener('click', function (evt) {
+  var target = evt.target;
+
+  changeFields(target);
+  setFeatureForInputs(target);
+});
+
+
