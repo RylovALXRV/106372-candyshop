@@ -546,6 +546,9 @@ var rangeBtnLeftElement = document.querySelector('.range__btn--left');
 var rangeBtnRightElement = document.querySelector('.range__btn--right');
 var rangeFillLineElement = document.querySelector('.range__fill-line');
 var rangeFilterElement = document.querySelector('.range__filter');
+var rangePriceMax = document.querySelector('.range__price--max');
+var rangePriceMin = document.querySelector('.range__price--min');
+
 
 var getCoordsElement = function (element) {
   var box = element.getBoundingClientRect();
@@ -556,7 +559,27 @@ var getCoordsElement = function (element) {
   };
 };
 
-document.querySelector('.range__filter').addEventListener('mousedown', function (evt) {
+var setFeatureForInputs = function (target) {
+  var paymentInputs = document.querySelectorAll('.payment__inputs input');
+  var deliverAddress = document.querySelectorAll('.deliver__address-entry-fields input');
+
+  var fieldLabels = {
+    'payment__card': [paymentInputs, true],
+    'payment__cash': [paymentInputs, false],
+    'deliver__courier': [deliverAddress, true],
+    'deliver__store': [deliverAddress, false]
+  };
+
+  for (var key in fieldLabels) {
+    if (target.htmlFor === key && checkIsEmptyBasket(goodCardsElement)) {
+      setRequaredForInputs(fieldLabels[key][0], fieldLabels[key][1]);
+    }
+  }
+};
+
+rangeFilterElement.insertBefore(rangeFillLineElement, rangeFilterElement.firstChild);
+
+rangeFilterElement.addEventListener('mousedown', function (evt) {
   evt.preventDefault();
 
   var startCoord = {
@@ -600,13 +623,13 @@ document.querySelector('.range__filter').addEventListener('mousedown', function 
     if (checkIsClickFeature(evt.target, 'range__btn--left')) {
       rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
       rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
-      document.querySelector('.range__price--min').textContent = Math.floor(newCoordsBtn.left);
+      rangePriceMin.textContent = Math.floor(newCoordsBtn.left);
     }
 
     if (checkIsClickFeature(evt.target, 'range__btn--right')) {
       rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
       rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
-      document.querySelector('.range__price--max').textContent = Math.floor(newCoordsBtn.right);
+      rangePriceMax.textContent = Math.floor(newCoordsBtn.right);
     }
   };
 
@@ -621,18 +644,20 @@ document.querySelector('.range__filter').addEventListener('mousedown', function 
     };
 
     var shift = {
-      x: evtMouseup.clientX - evt.clientX
+      btnLeft: evtMouseup.clientX - coordsRangeBtnLeftElement.coordXLeft,
+      btnRight: evtMouseup.clientX - coordsRangeBtnRightElement.coordXLeft
     };
 
-    // в данном случае, как я понял, нам нужно отследить только начальную координату без движения мыши
-    if (evtMouseup.target === rangeBtnLeftElement && shift.x === 0) {
+    if (evtMouseup.clientX < coordsRangeBtnRightElement.coordXLeft / 2) {
+      newCoordsBtn.left = evtMouseup.clientX - coordsRangeFilterElement.coordXLeft - shift.btnLeft;
       rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
       rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
-      document.querySelector('.range__price--min').textContent = Math.floor(newCoordsBtn.left);
-    } else if (evtMouseup.target === rangeBtnRightElement && shift.x === 0) {
+      rangePriceMin.textContent = Math.floor(newCoordsBtn.left);
+    } else {
+      newCoordsBtn.right = evtMouseup.clientX - coordsRangeFilterElement.coordXLeft - shift.btnRight;
       rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
       rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
-      document.querySelector('.range__price--max').textContent = Math.floor(newCoordsBtn.right);
+      rangePriceMax.textContent = Math.floor(newCoordsBtn.right);
     }
     document.removeEventListener('mousemove', onButtonMousemove);
     document.removeEventListener('mouseup', onButtonMouseup);
@@ -654,24 +679,6 @@ document.querySelector('.deliver__store-list').addEventListener('click', functio
   document.querySelector('.deliver__store-map-img').src = 'img/map/' + currentTarget.querySelector('#' + target.htmlFor).value + '.jpg';
   currentTarget.querySelector('#' + target.htmlFor).checked = true;
 });
-
-var setFeatureForInputs = function (target) {
-  var paymentInputs = document.querySelectorAll('.payment__inputs input');
-  var deliverAddress = document.querySelectorAll('.deliver__address-entry-fields input');
-
-  var fieldLabels = {
-    'payment__card': [paymentInputs, true],
-    'payment__cash': [paymentInputs, false],
-    'deliver__courier': [deliverAddress, true],
-    'deliver__store': [deliverAddress, false]
-  };
-
-  for (var key in fieldLabels) {
-    if (target.htmlFor === key && checkIsEmptyBasket(goodCardsElement)) {
-      setRequaredForInputs(fieldLabels[key][0], fieldLabels[key][1]);
-    }
-  }
-};
 
 document.querySelector('.buy').addEventListener('click', function (evt) {
   var target = evt.target;
