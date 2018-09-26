@@ -146,10 +146,10 @@
       var target = evt.target;
       var currentTarget = evt.currentTarget;
 
-      if (window.data.checkIsClickFeature(target, 'card__btn-favorite')) {
+      if (window.util.checkIsClickFeature(target, 'card__btn-favorite')) {
         changeFeatureForGood(target, 'card__btn-favorite--selected', 'card__btn-favorite');
       }
-      if (window.data.checkIsClickFeature(target, 'card__btn-composition')) {
+      if (window.util.checkIsClickFeature(target, 'card__btn-composition')) {
         changeFeatureForGood(currentTarget.querySelector('.card__composition'), 'card__composition--hidden', 'card__btn-composition');
       }
 
@@ -171,7 +171,7 @@
         document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article')) + ':';
       }
 
-      if (!changeTextForBasket(window.data.checkIsEmptyBasket(goodCardsElement))) {
+      if (!changeTextForBasket(window.util.checkIsEmptyBasket(goodCardsElement))) {
         document.querySelector('.goods__price').textContent = parseFloat(document.querySelector('.goods__price').textContent) + getSumElement(target, currentTarget) + ' ₽';
         document.querySelector('.main-header__basket').textContent = 'В корзине ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article'));
       }
@@ -190,13 +190,13 @@
       setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
     }
 
-    if (target.tagName === 'BUTTON' && window.data.checkIsClickFeature(target, 'card-order__btn--increase')) {
+    if (target.tagName === 'BUTTON' && window.util.checkIsClickFeature(target, 'card-order__btn--increase')) {
       changeGoodAmount(target, currentTarget, 1);
-    } else if (target.tagName === 'BUTTON' && window.data.checkIsClickFeature(target, 'card-order__btn--decrease')) {
+    } else if (target.tagName === 'BUTTON' && window.util.checkIsClickFeature(target, 'card-order__btn--decrease')) {
       changeGoodAmount(target, currentTarget, -1);
     }
 
-    if (!changeTextForBasket(window.data.checkIsEmptyBasket(goodCardsElement))) {
+    if (!changeTextForBasket(window.util.checkIsEmptyBasket(goodCardsElement))) {
       setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
     } else {
       document.querySelector('.main-header__basket').textContent = 'В корзине ничего нет';

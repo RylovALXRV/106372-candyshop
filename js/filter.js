@@ -130,13 +130,13 @@
         newCoordsBtn.right = coordsRangeBtnLeftElement.coordXLeft - coordsRangeFilterElement.coordXLeft + coordsRangeBtnRightElement.width;
       }
 
-      if (window.data.checkIsClickFeature(evt.target, 'range__btn--left')) {
+      if (window.util.checkIsClickFeature(evt.target, 'range__btn--left')) {
         rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
         rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
         rangePriceMin.textContent = Math.floor(newCoordsBtn.left);
       }
 
-      if (window.data.checkIsClickFeature(evt.target, 'range__btn--right')) {
+      if (window.util.checkIsClickFeature(evt.target, 'range__btn--right')) {
         rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
         rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
         rangePriceMax.textContent = Math.floor(newCoordsBtn.right);
