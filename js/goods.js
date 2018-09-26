@@ -586,10 +586,16 @@ rangeFilterElement.addEventListener('mousedown', function (evt) {
     x: evt.clientX
   };
 
+  var shiftBtn = {};
+
   var onButtonMousemove = function (evtMousemove) {
     var coordsRangeBtnLeftElement = getCoordsElement(rangeBtnLeftElement);
     var coordsRangeBtnRightElement = getCoordsElement(rangeBtnRightElement);
     var coordsRangeFilterElement = getCoordsElement(rangeFilterElement);
+
+    // найдем изначальный сдвиг курсора для пинов
+    shiftBtn.left = startCoord.x - coordsRangeBtnLeftElement.coordXLeft;
+    shiftBtn.right = startCoord.x - coordsRangeBtnRightElement.coordXLeft;
 
     var shift = {
       x: startCoord.x - evtMousemove.clientX
@@ -643,18 +649,26 @@ rangeFilterElement.addEventListener('mousedown', function (evt) {
       right: coordsRangeBtnRightElement.coordXLeft - coordsRangeFilterElement.coordXLeft
     };
 
-    var shift = {
-      btnLeft: evtMouseup.clientX - coordsRangeBtnLeftElement.coordXLeft,
-      btnRight: evtMouseup.clientX - coordsRangeBtnRightElement.coordXLeft
-    };
+    var MIN_VALUE = 0;
 
-    if (evtMouseup.clientX < coordsRangeBtnRightElement.coordXLeft / 2) {
-      newCoordsBtn.left = evtMouseup.clientX - coordsRangeFilterElement.coordXLeft - shift.btnLeft;
+    // shiftBtn.left < 0 - использую, чтобы при перемещении правого пина левее левого, левый получил нужные координаты
+    // и передвинулся на новое положение, и наоборот
+    shiftBtn.left = isNaN(shiftBtn.left) || shiftBtn.left < MIN_VALUE ? MIN_VALUE : shiftBtn.left;
+    shiftBtn.right = isNaN(shiftBtn.right) || shiftBtn.right > coordsRangeBtnRightElement.width ? MIN_VALUE : shiftBtn.right;
+
+    if (evtMouseup.clientX < (coordsRangeBtnRightElement.coordXLeft + coordsRangeBtnLeftElement.coordXLeft) / 2) {
+      newCoordsBtn.left = evtMouseup.clientX - coordsRangeFilterElement.coordXLeft - shiftBtn.left;
+      if (newCoordsBtn.left <= 0) {
+        newCoordsBtn.left = 0;
+      }
       rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
       rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
       rangePriceMin.textContent = Math.floor(newCoordsBtn.left);
     } else {
-      newCoordsBtn.right = evtMouseup.clientX - coordsRangeFilterElement.coordXLeft - shift.btnRight;
+      newCoordsBtn.right = evtMouseup.clientX - coordsRangeFilterElement.coordXLeft - shiftBtn.right;
+      if (newCoordsBtn.right >= coordsRangeFilterElement.width - coordsRangeBtnRightElement.width) {
+        newCoordsBtn.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width;
+      }
       rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
       rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
       rangePriceMax.textContent = Math.floor(newCoordsBtn.right);
