@@ -16,6 +16,11 @@ window.util = (function () {
     },
     getRandomValue: function (min, max) {
       return Math.round(Math.random() * (max - min) + min);
+    },
+    onError: function (errorMessage) {
+      var modalErrorElement = document.querySelector('.modal--error');
+      modalErrorElement.classList.remove('modal--hidden');
+      modalErrorElement.querySelector('.modal__message').textContent = errorMessage;
     }
   };
 })();
