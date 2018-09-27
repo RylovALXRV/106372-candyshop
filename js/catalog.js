@@ -215,7 +215,7 @@
     }
   };
 
-  var onload = function (response) {
+  var onload = function () {
     resetInputs(formElement.querySelectorAll('input'));
     document.querySelector('.modal--success').classList.remove('modal--hidden');
   };
