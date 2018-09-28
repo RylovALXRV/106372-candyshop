@@ -7,7 +7,7 @@
   };
 
   var SUCCESS_CODE = 200;
-  var TIMEOUT = 2000;
+  var TIMEOUT = 10000;
 
 
   var createRequest = function (onLoad, onError) {
