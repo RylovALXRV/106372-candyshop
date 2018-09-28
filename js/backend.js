@@ -1,17 +1,24 @@
 'use strict';
 
 (function () {
+  var Url = {
+    GET: 'https://js.dump.academy/candyshop/data',
+    POST: 'https://js.dump.academy/candyshop'
+  };
 
-  window.load = function (onload, onError) {
+  var SUCCESS_CODE = 200;
+  var TIMEOUT = 2000;
+
+
+  var createRequest = function (onLoad, onError) {
     var xhr = new XMLHttpRequest();
-    var URL = 'https://js.dump.academy/candyshop/data';
 
     xhr.responseType = 'json';
 
     xhr.addEventListener('load', function () {
-      if (xhr.status === 200) {
+      if (xhr.status === SUCCESS_CODE) {
         document.querySelector('.catalog__load').classList.add('visually-hidden');
-        onload(xhr.response);
+        onLoad(xhr.response);
       } else {
         onError('Статус ответа: ' + xhr.status + ' ' + xhr.statusText);
       }
@@ -25,31 +32,26 @@
       onError('Запрос не успел выполниться за ' + xhr.timeout + 'мс');
     });
 
-    xhr.timeout = 1000;
+    xhr.timeout = TIMEOUT;
+    return xhr;
+  };
 
-    xhr.open('GET', URL);
+  var download = function (onLoad, onError) {
+    var xhr = createRequest(onLoad, onError);
+
+    xhr.open('GET', Url.GET);
     xhr.send();
   };
 
-  window.upload = function (data, onLoad, onError) {
-    var xhr = new XMLHttpRequest();
-    var URL = 'https://js.dump.academy/candyshop';
+  var upload = function (data, onLoad, onError) {
+    var xhr = createRequest(onLoad, onError);
 
-    xhr.responseType = 'json';
-
-    xhr.addEventListener('load', function () {
-      if (xhr.status === 200) {
-        onLoad(xhr.response);
-      } else {
-        onError('Статус ответа: ' + xhr.status + ' ' + xhr.statusText);
-      }
-    });
-
-    xhr.addEventListener('error', function () {
-      onError('Код ошибки: ' + xhr.status + '.');
-    });
-
-    xhr.open('POST', URL);
+    xhr.open('GET', Url.GET);
     xhr.send(data);
+  };
+
+  window.backend = {
+    load: download,
+    upload: upload
   };
 })();

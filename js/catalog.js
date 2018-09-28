@@ -1,6 +1,7 @@
 'use strict';
 
 (function () {
+  var catalogCardsElement = document.querySelector('.catalog__cards');
   var formElement = document.querySelector('.buy form');
   var goodsCardEmptyElement = document.querySelector('.goods__card-empty');
   var goodsPriceElement = document.querySelector('.goods__price');
@@ -17,6 +18,14 @@
 
   var changeFeatureForGood = function (target, className) {
     target.classList.toggle(className);
+  };
+
+  var changeValueFields = function (target, value) {
+    var cardOrderCountElement = target.querySelector('.card-order__count');
+    var cardOrderPriceElement = target.querySelector('.card-order__price');
+
+    cardOrderCountElement.value = parseFloat(cardOrderCountElement.value) + value;
+    goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + value * parseFloat(cardOrderPriceElement.textContent) + ' ₽';
   };
 
   var changeGoodAmount = function (target, currentTarget, value) {
@@ -45,14 +54,6 @@
       goodsTotalElement.classList.remove('visually-hidden');
       return false;
     }
-  };
-
-  var changeValueFields = function (target, value) {
-    var cardOrderCountElement = target.querySelector('.card-order__count');
-    var cardOrderPriceElement = target.querySelector('.card-order__price');
-
-    cardOrderCountElement.value = parseFloat(cardOrderCountElement.value) + value;
-    goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + value * parseFloat(cardOrderPriceElement.textContent) + ' ₽';
   };
 
   var findParentElement = function (target, currentEvt, tagName) {
@@ -137,52 +138,45 @@
     document.querySelector('.main-header__basket').textContent = 'В корзине ' + goodsAmount + ' ' + stringRight;
   };
 
-  // изначально корзина пуста, значит все поля блокируем
   changeBlockFields(document.querySelector('.order'), 'disabled', true);
 
-  // поставил таймер, т.к. без него коллекция элементов еще пуста,
-  // а после, например, максимального времени ожидания, можно
-  // найти коллекцию загруженных элементов
-  setTimeout(function () {
-    var catalogCardElements = document.querySelectorAll('.catalog__card');
-    for (var i = 0; i < catalogCardElements.length; i++) {
-      catalogCardElements[i].addEventListener('click', function (evt) {
-        evt.preventDefault();
-        var target = evt.target;
-        var currentTarget = evt.currentTarget;
+  catalogCardsElement.addEventListener('click', function (evt) {
+    evt.preventDefault();
+    var target = evt.target;
 
-        if (window.util.checkIsClickFeature(target, 'card__btn-favorite')) {
-          changeFeatureForGood(target, 'card__btn-favorite--selected', 'card__btn-favorite');
-        }
-        if (window.util.checkIsClickFeature(target, 'card__btn-composition')) {
-          changeFeatureForGood(currentTarget.querySelector('.card__composition'), 'card__composition--hidden', 'card__btn-composition');
-        }
+    var parentElement = findParentElement(target, evt.currentTarget, 'ARTICLE');
 
-        if (!target.classList.contains('card__btn')) {
-          return;
-        }
-
-        var goodCard = {
-          img: currentTarget.querySelector('.card__img').src,
-          price: currentTarget.querySelector('.card__price').firstChild.data,
-          name: currentTarget.querySelector('.card__title').textContent,
-          id: currentTarget.dataset.id
-        };
-
-        if (setGoodsAmountInBasket(target, currentTarget)) {
-          goodCardsElement.appendChild(renderGoodCard(goodCard));
-          // в параметрах не использую переменную потому что на момент, когда товар добавляю в корзину его еще нет.
-          // А поиск коллекции прямо в параметре дает правильный результат
-          document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article')) + ':';
-        }
-
-        if (!changeTextForBasket(window.util.checkIsEmptyBasket(goodCardsElement))) {
-          document.querySelector('.goods__price').textContent = parseFloat(document.querySelector('.goods__price').textContent) + getSumElement(target, currentTarget) + ' ₽';
-          document.querySelector('.main-header__basket').textContent = 'В корзине ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article'));
-        }
-      });
+    if (!parentElement.closest('.catalog__card')) {
+      return;
     }
-  }, 1100);
+
+    if (window.util.checkIsClickFeature(target, 'card__btn-favorite')) {
+      changeFeatureForGood(target, 'card__btn-favorite--selected', 'card__btn-favorite');
+    }
+    if (window.util.checkIsClickFeature(target, 'card__btn-composition')) {
+      changeFeatureForGood(parentElement.querySelector('.card__composition'), 'card__composition--hidden', 'card__btn-composition');
+    }
+    if (!target.classList.contains('card__btn')) {
+      return;
+    }
+
+    var goodCard = {
+      img: parentElement.querySelector('.card__img').src,
+      price: parentElement.querySelector('.card__price').firstChild.data,
+      name: parentElement.querySelector('.card__title').textContent,
+      id: parentElement.dataset.id
+    };
+
+    if (setGoodsAmountInBasket(target, parentElement)) {
+      goodCardsElement.appendChild(renderGoodCard(goodCard));
+      document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article')) + ':';
+    }
+
+    if (!changeTextForBasket(window.util.checkIsEmptyBasket(goodCardsElement))) {
+      document.querySelector('.goods__price').textContent = parseFloat(document.querySelector('.goods__price').textContent) + getSumElement(target, parentElement) + ' ₽';
+      document.querySelector('.main-header__basket').textContent = 'В корзине ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article'));
+    }
+  });
 
   goodCardsElement.addEventListener('click', function (evt) {
     evt.preventDefault();
@@ -221,7 +215,7 @@
   };
 
   formElement.addEventListener('submit', function (evt) {
-    window.upload(new FormData(formElement), onload, window.util.onError);
+    window.backend.upload(new FormData(formElement), onload, window.util.onError);
     evt.preventDefault();
   });
 

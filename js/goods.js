@@ -68,7 +68,7 @@
     catalogCardsElement.appendChild(fragmentCatalogCards);
   };
 
-  window.load(onload, window.util.onError);
+  window.backend.load(onload, window.util.onError);
 
   goodCardsElement.classList.remove('goods__cards--empty');
   catalogCardsElement.classList.remove('catalog__cards--load');
