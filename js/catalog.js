@@ -114,7 +114,8 @@
     element.querySelector('.card-order__price').textContent = goodCard.price + ' ₽';
     element.querySelector('.visually-hidden').textContent = goodCard.amount;
     element.querySelector('.visually-hidden').textContent = 1;
-    element.querySelector('input.card-order__count').name = cardOrderTitleElement.textContent;
+    element.querySelector('input.card-order__count').name = goodCard.picture;
+    element.querySelector('input.card-order__count').id = 'card-order__' + goodCard.picture;
     element.querySelector('.card-order__count').value = element.querySelector('.visually-hidden').textContent;
     element.dataset.cardId = goodCard.id;
     return element;
@@ -190,10 +191,11 @@
     }
 
     var goodCard = {
+      id: parentElement.dataset.id,
       img: parentElement.querySelector('.card__img').src,
-      price: parentElement.querySelector('.card__price').firstChild.data,
       name: parentElement.querySelector('.card__title').textContent,
-      id: parentElement.dataset.id
+      picture: parentElement.querySelector('.card__img').alt,
+      price: parentElement.querySelector('.card__price').firstChild.data
     };
 
     if (setGoodsAmountInBasket(target, parentElement)) {

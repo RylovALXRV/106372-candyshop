@@ -1,14 +1,11 @@
 'use strict';
 
 (function () {
-  var Url = {
-    GET: 'https://js.dump.academy/candyshop/data',
-    POST: 'https://js.dump.academy/candyshop'
-  };
 
+  var URL_GET = 'https://js.dump.academy/candyshop/data';
+  var URL_POST = 'https://js.dump.academy/candyshop';
   var SUCCESS_CODE = 200;
   var TIMEOUT = 10000;
-
 
   var createRequest = function (onLoad, onError) {
     var xhr = new XMLHttpRequest();
@@ -39,14 +36,14 @@
   var download = function (onLoad, onError) {
     var xhr = createRequest(onLoad, onError);
 
-    xhr.open('GET', Url.GET);
+    xhr.open('GET', URL_GET);
     xhr.send();
   };
 
   var upload = function (data, onLoad, onError) {
     var xhr = createRequest(onLoad, onError);
 
-    xhr.open('GET', Url.GET);
+    xhr.open('POST', URL_POST);
     xhr.send(data);
   };
 
