@@ -1,12 +1,15 @@
 'use strict';
 
 (function () {
-  var catalogCardElements = document.querySelectorAll('.catalog__card');
+  var catalogCardsElement = document.querySelector('.catalog__cards');
+  var formElement = document.querySelector('.buy form');
   var goodsCardEmptyElement = document.querySelector('.goods__card-empty');
   var goodsPriceElement = document.querySelector('.goods__price');
   var goodsTotalElement = document.querySelector('.goods__total');
   var goodCardTemplate = document.querySelector('#card-order').content.querySelector('.goods_card');
   var goodCardsElement = document.querySelector('.goods__cards');
+  var mainHeaderBasket = document.querySelector('.main-header__basket');
+  var orderElement = document.querySelector('.order');
 
   var changeBlockFields = function (element, attribute, boolean) {
     var inputs = element.querySelectorAll('input');
@@ -17,6 +20,14 @@
 
   var changeFeatureForGood = function (target, className) {
     target.classList.toggle(className);
+  };
+
+  var changeValueFields = function (target, value) {
+    var cardOrderCountElement = target.querySelector('.card-order__count');
+    var cardOrderPriceElement = target.querySelector('.card-order__price');
+
+    cardOrderCountElement.value = parseFloat(cardOrderCountElement.value) + value;
+    goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + value * parseFloat(cardOrderPriceElement.textContent) + ' ₽';
   };
 
   var changeGoodAmount = function (target, currentTarget, value) {
@@ -34,30 +45,22 @@
 
   var changeTextForBasket = function (isEmpty) {
     if (!isEmpty) {
-      changeBlockFields(document.querySelector('.order'), 'disabled', true);
-      changeBlockFields(document.querySelector('.order'), 'required', false);
+      changeBlockFields(orderElement, 'disabled', true);
+      changeBlockFields(orderElement, 'required', false);
       goodsCardEmptyElement.classList.remove('visually-hidden');
       goodsTotalElement.classList.add('visually-hidden');
       return true;
     } else {
-      changeBlockFields(document.querySelector('.order'), 'disabled', false);
+      changeBlockFields(orderElement, 'disabled', false);
       goodsCardEmptyElement.classList.add('visually-hidden');
       goodsTotalElement.classList.remove('visually-hidden');
       return false;
     }
   };
 
-  var changeValueFields = function (target, value) {
-    var cardOrderCountElement = target.querySelector('.card-order__count');
-    var cardOrderPriceElement = target.querySelector('.card-order__price');
-
-    cardOrderCountElement.value = parseFloat(cardOrderCountElement.value) + value;
-    goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + value * parseFloat(cardOrderPriceElement.textContent) + ' ₽';
-  };
-
-  var findParentElement = function (target, currentEvt) {
+  var findParentElement = function (target, currentEvt, tagName) {
     while (target.tagName !== currentEvt) {
-      if (target.tagName === 'ARTICLE') {
+      if (target.tagName === tagName) {
         break;
       }
       target = target.parentNode;
@@ -100,16 +103,19 @@
   };
 
   var getSumElement = function (target, currentTarget) {
-    return parseFloat(findParentElement(target, currentTarget).querySelector('.card__price').firstChild.data);
+    return parseFloat(findParentElement(target, currentTarget, 'ARTICLE').querySelector('.card__price').firstChild.data);
   };
 
   var renderGoodCard = function (goodCard) {
     var element = goodCardTemplate.cloneNode(true);
+    var cardOrderTitleElement = element.querySelector('.card-order__title');
+    cardOrderTitleElement.textContent = goodCard.name;
     element.querySelector('.card-order__img').src = goodCard.img;
     element.querySelector('.card-order__price').textContent = goodCard.price + ' ₽';
-    element.querySelector('.card-order__title').textContent = goodCard.name;
     element.querySelector('.visually-hidden').textContent = goodCard.amount;
     element.querySelector('.visually-hidden').textContent = 1;
+    element.querySelector('input.card-order__count').name = goodCard.picture;
+    element.querySelector('input.card-order__count').id = 'card-order__' + goodCard.picture;
     element.querySelector('.card-order__count').value = element.querySelector('.visually-hidden').textContent;
     element.dataset.cardId = goodCard.id;
     return element;
@@ -118,8 +124,9 @@
   var setGoodsAmountInBasket = function (target, currentTarget) {
     var goodCardsElements = goodCardsElement.querySelectorAll('article');
     for (var i = 0; i < goodCardsElements.length; i++) {
+      var cardOrderCountElement = goodCardsElements[i].querySelector('.card-order__count');
       if (goodCardsElements && currentTarget.dataset.id === goodCardsElements[i].dataset.cardId) {
-        goodCardsElements[i].querySelector('.card-order__count').value = parseFloat(goodCardsElements[i].querySelector('.card-order__count').value) + 1;
+        cardOrderCountElement.value = parseFloat(cardOrderCountElement.value) + 1;
         return false;
       }
     }
@@ -134,49 +141,73 @@
     var goodsAmount = getGoodsAmount(element);
     var stringRight = getRightString(element);
     document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + goodsAmount + ' ' + stringRight + ':';
-    document.querySelector('.main-header__basket').textContent = 'В корзине ' + goodsAmount + ' ' + stringRight;
+    mainHeaderBasket.textContent = 'В корзине ' + goodsAmount + ' ' + stringRight;
   };
 
-  // изначально корзина пуста, значит все поля блокируем
-  changeBlockFields(document.querySelector('.order'), 'disabled', true);
+  var cleanFieldsAfterSend = function (element) {
+    var articles = element.querySelectorAll('article');
+    for (var i = 0; i < articles.length; i++) {
+      element.removeChild(articles[i]);
+    }
+    document.querySelector('.goods__total').classList.add('visually-hidden');
+    document.querySelector('.goods__card-empty').classList.remove('visually-hidden');
+    mainHeaderBasket.textContent = 'В корзине ничего нет';
+  };
 
-  for (var i = 0; i < catalogCardElements.length; i++) {
-    catalogCardElements[i].addEventListener('click', function (evt) {
-      evt.preventDefault();
-      var target = evt.target;
-      var currentTarget = evt.currentTarget;
+  var resetInputs = function (elements) {
+    for (var i = 0; i < elements.length; i++) {
+      elements[i].value = '';
+    }
+  };
 
-      if (window.util.checkIsClickFeature(target, 'card__btn-favorite')) {
-        changeFeatureForGood(target, 'card__btn-favorite--selected', 'card__btn-favorite');
-      }
-      if (window.util.checkIsClickFeature(target, 'card__btn-composition')) {
-        changeFeatureForGood(currentTarget.querySelector('.card__composition'), 'card__composition--hidden', 'card__btn-composition');
-      }
+  var onload = function () {
+    changeBlockFields(orderElement, 'disabled', true);
+    cleanFieldsAfterSend(goodCardsElement);
+    resetInputs(formElement.querySelectorAll('input'));
+    document.querySelector('.modal--success').classList.remove('modal--hidden');
+    goodsPriceElement.textContent = '0 ₽';
+  };
 
-      if (!target.classList.contains('card__btn')) {
-        return;
-      }
+  changeBlockFields(orderElement, 'disabled', true);
 
-      var goodCard = {
-        img: currentTarget.querySelector('.card__img').src,
-        price: currentTarget.querySelector('.card__price').firstChild.data,
-        name: currentTarget.querySelector('.card__title').textContent,
-        id: currentTarget.dataset.id
-      };
+  catalogCardsElement.addEventListener('click', function (evt) {
+    evt.preventDefault();
+    var target = evt.target;
 
-      if (setGoodsAmountInBasket(target, currentTarget)) {
-        goodCardsElement.appendChild(renderGoodCard(goodCard));
-        // в параметрах не использую переменную потому что на момент, когда товар добавляю в корзину его еще нет.
-        // А поиск коллекции прямо в параметре дает правильный результат
-        document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article')) + ':';
-      }
+    var parentElement = findParentElement(target, evt.currentTarget, 'ARTICLE');
 
-      if (!changeTextForBasket(window.util.checkIsEmptyBasket(goodCardsElement))) {
-        document.querySelector('.goods__price').textContent = parseFloat(document.querySelector('.goods__price').textContent) + getSumElement(target, currentTarget) + ' ₽';
-        document.querySelector('.main-header__basket').textContent = 'В корзине ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article'));
-      }
-    });
-  }
+    if (!parentElement.closest('.catalog__card')) {
+      return;
+    }
+
+    if (window.util.checkIsClickFeature(target, 'card__btn-favorite')) {
+      changeFeatureForGood(target, 'card__btn-favorite--selected', 'card__btn-favorite');
+    }
+    if (window.util.checkIsClickFeature(target, 'card__btn-composition')) {
+      changeFeatureForGood(parentElement.querySelector('.card__composition'), 'card__composition--hidden', 'card__btn-composition');
+    }
+    if (!target.classList.contains('card__btn')) {
+      return;
+    }
+
+    var goodCard = {
+      id: parentElement.dataset.id,
+      img: parentElement.querySelector('.card__img').src,
+      name: parentElement.querySelector('.card__title').textContent,
+      picture: parentElement.querySelector('.card__img').alt,
+      price: parentElement.querySelector('.card__price').firstChild.data
+    };
+
+    if (setGoodsAmountInBasket(target, parentElement)) {
+      goodCardsElement.appendChild(renderGoodCard(goodCard));
+      document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article')) + ':';
+    }
+
+    if (!changeTextForBasket(window.util.checkIsEmptyBasket(goodCardsElement))) {
+      goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + getSumElement(target, parentElement) + ' ₽';
+      mainHeaderBasket.textContent = 'В корзине ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article'));
+    }
+  });
 
   goodCardsElement.addEventListener('click', function (evt) {
     evt.preventDefault();
@@ -185,7 +216,7 @@
 
     if (target.tagName === 'A' && target.classList.contains('card-order__close')) {
       target.parentNode.remove();
-      var parentTarget = findParentElement(target, currentTarget);
+      var parentTarget = findParentElement(target, currentTarget, 'ARTICLE');
       goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) - setTotalSumItems(parentTarget) + ' ₽';
       setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
     }
@@ -199,7 +230,25 @@
     if (!changeTextForBasket(window.util.checkIsEmptyBasket(goodCardsElement))) {
       setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
     } else {
-      document.querySelector('.main-header__basket').textContent = 'В корзине ничего нет';
+      mainHeaderBasket.textContent = 'В корзине ничего нет';
     }
+  });
+
+  document.addEventListener('click', function (evt) {
+    var target = evt.target;
+    var currentTarget = evt.currentTarget;
+
+    var element = target.closest('.modal__close');
+
+    if (!element) {
+      return;
+    }
+    var parentElement = findParentElement(target, currentTarget, 'SECTION');
+    parentElement.classList.add('modal--hidden');
+  });
+
+  formElement.addEventListener('submit', function (evt) {
+    window.backend.upload(new FormData(formElement), onload, window.util.onError);
+    evt.preventDefault();
   });
 })();

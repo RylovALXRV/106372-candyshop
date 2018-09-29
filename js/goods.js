@@ -7,6 +7,11 @@
 
   var dataId = 1;
 
+  var getOriginalAlt = function (picture) {
+    var originalAltName = picture.split('.');
+    return originalAltName[0];
+  };
+
   var setClassAccordingToRating = function (rating, element) {
     switch (rating) {
       case 1:
@@ -47,7 +52,9 @@
 
   var renderCatalogCard = function (card) {
     var element = catalogCardTemplate.cloneNode(true);
-    element.querySelector('.card__img').src = 'img/cards/' + card.picture + '.jpg';
+    var cardImgElement = element.querySelector('.card__img');
+    cardImgElement.alt = getOriginalAlt(card.picture);
+    cardImgElement.src = 'img/cards/' + card.picture;
     element.querySelector('.card__composition-list').textContent = card.nutritionFacts.contents;
     element.querySelector('.card__price').firstChild.data = card.price + ' ';
     element.querySelector('.card__title').textContent = card.name;
@@ -60,7 +67,7 @@
     return element;
   };
 
-  var appendCatalogCards = function (cards) {
+  var onload = function (cards) {
     var fragmentCatalogCards = document.createDocumentFragment();
     cards.forEach(function (card) {
       fragmentCatalogCards.appendChild(renderCatalogCard(card));
@@ -68,10 +75,9 @@
     catalogCardsElement.appendChild(fragmentCatalogCards);
   };
 
-  appendCatalogCards(window.catalogCards);
+  window.backend.load(onload, window.util.onError);
 
   goodCardsElement.classList.remove('goods__cards--empty');
   catalogCardsElement.classList.remove('catalog__cards--load');
-  document.querySelector('.catalog__load').classList.add('visually-hidden');
 })();
 
