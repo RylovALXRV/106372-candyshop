@@ -9,6 +9,131 @@
   var rangeFilterElement = document.querySelector('.range__filter');
   var rangePriceMax = document.querySelector('.range__price--max');
   var rangePriceMin = document.querySelector('.range__price--min');
+  // var catalogEmptyFilterTemplate = document.querySelector('#empty-filters').content.querySelector('.catalog__empty-filter');
+
+  var currentCards = [];
+
+  var appendCards = function (cards) {
+    var fragmentCatalogCards = document.createDocumentFragment();
+    cards.forEach(function (card) {
+      fragmentCatalogCards.appendChild(window.renderCatalogCard(card));
+    });
+    catalogCardsElement.appendChild(fragmentCatalogCards);
+  };
+  //
+  // var renderEmptyFilters = function () {
+  //   return catalogEmptyFilterTemplate.cloneNode(true);
+  // };
+
+  var onload = function (cards) {
+    cards.forEach(function (card) {
+      currentCards.push(card);
+    });
+  };
+
+  var getInput = function (field, i) {
+    return field[i] ? field[i] : false;
+  };
+
+  window.backend.load(onload, window.util.onError);
+
+  // catalogCardsElement.appendChild(renderEmptyFilters());
+
+  document.querySelector('.catalog__sidebar').addEventListener('click', function (evt) {
+    var target = evt.target;
+    var articles = catalogCardsElement.querySelectorAll('article');
+    var catalogFilter = document.querySelectorAll('.catalog__filter');
+    var foodPropertyFilter;
+    var inputFoodProperty = catalogFilter[1].querySelectorAll('input:checked');
+    var inputFoodType = catalogFilter[0].querySelectorAll('input:checked');
+    if (target.tagName !== 'INPUT') {
+      return;
+    }
+
+    var foodType = {
+      'icecream': 'Мороженое',
+      'soda': 'Газировка',
+      'gum': 'Жевательная резинка',
+      'marmalade': 'Мармелад',
+      'marshmallows': 'Зефир'
+    };
+
+    var foodProperty = {
+      'sugar-free': ['sugar', false],
+      'vegetarian': ['vegetarian', true],
+      'gluten-free': ['gluten', false],
+      'name': ['undefined', 0]
+    };
+
+    var foodTypeFilter = currentCards.filter(function (card) {
+      return card['kind'] === foodType[getInput(inputFoodType, 0).value] ||
+        card['kind'] === foodType[getInput(inputFoodType, 1).value] ||
+        card['kind'] === foodType[getInput(inputFoodType, 2).value] ||
+        card['kind'] === foodType[getInput(inputFoodType, 3).value] ||
+        card['kind'] === foodType[getInput(inputFoodType, 4).value];
+    });
+
+    if (foodTypeFilter.length) {
+      foodPropertyFilter = foodTypeFilter.filter(function (card) {
+        if (inputFoodProperty[0] === undefined) {
+          return true;
+        }
+        return card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 0).value][0]] === foodProperty[getInput(inputFoodProperty, 0).value][1];
+      }).filter(function (card) {
+        if (inputFoodProperty[1] === undefined && inputFoodProperty[2] === undefined) {
+          return true;
+        }
+        return card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 0).value][0]] === foodProperty[getInput(inputFoodProperty, 0).value][1] &&
+          card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 1).value][0]] === foodProperty[getInput(inputFoodProperty, 1).value][1];
+      }).filter(function (card) {
+        if (inputFoodProperty[1] === undefined || inputFoodProperty[2] === undefined) {
+          return true;
+        }
+        return card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 0).value][0]] === foodProperty[getInput(inputFoodProperty, 0).value][1] &&
+          card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 1).value][0]] === foodProperty[getInput(inputFoodProperty, 1).value][1] &&
+          card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 2).value][0]] === foodProperty[getInput(inputFoodProperty, 2).value][1];
+      });
+    } else {
+      foodPropertyFilter = currentCards.filter(function (card) {
+        if (inputFoodProperty[0] === undefined) {
+          return true;
+        }
+        return card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 0).value][0]] === foodProperty[getInput(inputFoodProperty, 0).value][1];
+      }).filter(function (card) {
+        if (inputFoodProperty[1] === undefined && inputFoodProperty[2] === undefined) {
+          return true;
+        }
+        return card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 0).value][0]] === foodProperty[getInput(inputFoodProperty, 0).value][1] &&
+          card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 1).value][0]] === foodProperty[getInput(inputFoodProperty, 1).value][1];
+      }).filter(function (card) {
+        if (inputFoodProperty[1] === undefined || inputFoodProperty[2] === undefined) {
+          return true;
+        }
+        return card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 0).value][0]] === foodProperty[getInput(inputFoodProperty, 0).value][1] &&
+          card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 1).value][0]] === foodProperty[getInput(inputFoodProperty, 1).value][1] &&
+          card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 2).value][0]] === foodProperty[getInput(inputFoodProperty, 2).value][1];
+      });
+    }
+
+    catalogCardsWrap.removeChild(catalogCardsElement);
+
+    for (var i = 0; i < articles.length; i++) {
+      catalogCardsElement.removeChild(articles[i]);
+    }
+
+    if (target.name === 'food-type') {
+      appendCards(foodTypeFilter);
+    } else {
+      appendCards(foodPropertyFilter);
+    }
+    catalogCardsWrap.appendChild(catalogCardsElement);
+
+    // if (articles.length === 0) {
+    //   catalogEmptyElement.classList.remove('visually-hidden');
+    // } else {
+    //   catalogEmptyElement.classList.add('visually-hidden');
+    // }
+  });
 
   var getCoordsElement = function (element) {
     var box = element.getBoundingClientRect();
@@ -155,8 +280,6 @@
 
       var MIN_VALUE = 0;
 
-      // shiftBtn.left < 0 - использую, чтобы при перемещении правого пина левее левого, левый получил нужные координаты
-      // и передвинулся на новое положение, и наоборот
       shiftBtn.left = isNaN(shiftBtn.left) || shiftBtn.left < MIN_VALUE ? MIN_VALUE : shiftBtn.left;
       shiftBtn.right = isNaN(shiftBtn.right) || shiftBtn.right > coordsRangeBtnRightElement.width ? MIN_VALUE : shiftBtn.right;
 
