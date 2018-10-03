@@ -11,13 +11,6 @@
   var mainHeaderBasket = document.querySelector('.main-header__basket');
   var orderElement = document.querySelector('.order');
 
-  var changeBlockFields = function (element, attribute, boolean) {
-    var inputs = element.querySelectorAll('input');
-    for (var i = 0; i < inputs.length; i++) {
-      inputs[i][attribute] = boolean;
-    }
-  };
-
   var changeFeatureForGood = function (target, className) {
     target.classList.toggle(className);
   };
@@ -45,27 +38,17 @@
 
   var changeTextForBasket = function (isEmpty) {
     if (!isEmpty) {
-      changeBlockFields(orderElement, 'disabled', true);
-      changeBlockFields(orderElement, 'required', false);
+      window.util.changeAttributeFields(orderElement, 'disabled', true);
+      window.util.changeAttributeFields(orderElement, 'required', false);
       goodsCardEmptyElement.classList.remove('visually-hidden');
       goodsTotalElement.classList.add('visually-hidden');
       return true;
     } else {
-      changeBlockFields(orderElement, 'disabled', false);
+      window.util.changeAttributeFields(orderElement, 'disabled', false);
       goodsCardEmptyElement.classList.add('visually-hidden');
       goodsTotalElement.classList.remove('visually-hidden');
       return false;
     }
-  };
-
-  var findParentElement = function (target, currentEvt, tagName) {
-    while (target.tagName !== currentEvt) {
-      if (target.tagName === tagName) {
-        break;
-      }
-      target = target.parentNode;
-    }
-    return target;
   };
 
   var getGoodsAmount = function (element) {
@@ -103,7 +86,7 @@
   };
 
   var getSumElement = function (target, currentTarget) {
-    return parseFloat(findParentElement(target, currentTarget, 'ARTICLE').querySelector('.card__price').firstChild.data);
+    return parseFloat(window.util.findParentElement(target, currentTarget, 'ARTICLE').querySelector('.card__price').firstChild.data);
   };
 
   var renderGoodCard = function (goodCard) {
@@ -161,20 +144,20 @@
   };
 
   var onload = function () {
-    changeBlockFields(orderElement, 'disabled', true);
+    window.util.changeAttributeFields(orderElement, 'disabled', true);
     cleanFieldsAfterSend(goodCardsElement);
     resetInputs(formElement.querySelectorAll('input'));
     document.querySelector('.modal--success').classList.remove('modal--hidden');
     goodsPriceElement.textContent = '0 ₽';
   };
 
-  changeBlockFields(orderElement, 'disabled', true);
+  window.util.changeAttributeFields(orderElement, 'disabled', true);
 
   catalogCardsElement.addEventListener('click', function (evt) {
     evt.preventDefault();
     var target = evt.target;
 
-    var parentElement = findParentElement(target, evt.currentTarget, 'ARTICLE');
+    var parentElement = window.util.findParentElement(target, evt.currentTarget, 'ARTICLE');
 
     if (!parentElement.closest('.catalog__card')) {
       return;
@@ -216,7 +199,7 @@
 
     if (target.tagName === 'A' && target.classList.contains('card-order__close')) {
       target.parentNode.remove();
-      var parentTarget = findParentElement(target, currentTarget, 'ARTICLE');
+      var parentTarget = window.util.findParentElement(target, currentTarget, 'ARTICLE');
       goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) - setTotalSumItems(parentTarget) + ' ₽';
       setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
     }
@@ -243,7 +226,7 @@
     if (!element) {
       return;
     }
-    var parentElement = findParentElement(target, currentTarget, 'SECTION');
+    var parentElement = window.util.findParentElement(target, currentTarget, 'SECTION');
     parentElement.classList.add('modal--hidden');
   });
 
