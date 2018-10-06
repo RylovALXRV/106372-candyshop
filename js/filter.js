@@ -22,147 +22,98 @@
         count++;
       }
       if (good.nutritionFacts[key] === foodType) {
-        count = goods.length;
+        count++;
       }
     });
 
     return count;
   };
 
-  var appendItemCount = function (target, currentTarget, typeFilter) {
-    var amount = 0;
-    var parentElement = window.util.findParentElement(target, currentTarget, 'LI');
-
-    switch (target.id) {
-      case 'filter-icecream':
-        amount = getAmountTypeGood(typeFilter, 'Мороженое');
-        break;
-      case 'filter-soda':
-        amount = getAmountTypeGood(typeFilter, 'Газировка');
-        break;
-      case 'filter-gum':
-        amount = getAmountTypeGood(typeFilter, 'Жевательная резинка');
-        break;
-      case 'filter-marmalade':
-        amount = getAmountTypeGood(typeFilter, 'Мармелад');
-        break;
-      case 'filter-marshmallows':
-        amount = getAmountTypeGood(typeFilter, 'Зефир');
-        break;
-    }
-    parentElement.querySelector('.input-btn__item-count').textContent = '(' + amount + ')';
+  var getCards = function (cards) {
+    return cards;
   };
 
-  var appendItem = function (target, currentTarget, typeFilter, inputs) {
+  var appendItemCount = function () {
     var amount = 0;
-
-    switch (target.id) {
-      case 'filter-sugar-free':
-        amount = getAmountTypeGood(typeFilter, false, 'sugar');
-        break;
-      case 'filter-vegetarian':
-        amount = getAmountTypeGood(typeFilter, true, 'vegetarian');
-        break;
-      case 'filter-gluten-free':
-        amount = getAmountTypeGood(typeFilter, false, 'gluten');
-        break;
-    }
+    var goods = getCards(window.currentCards);
+    var inputs = document.querySelectorAll('.catalog__filter input');
 
     for (var i = 0; i < inputs.length; i++) {
-      var parentElement = window.util.findParentElement(inputs[i], currentTarget, 'LI');
-      parentElement.querySelector('.input-btn__item-count').textContent = '(' + amount + ')';
+      var parentElement = window.util.findParentElement(inputs[i], document, 'LI');
+      switch (inputs[i].id) {
+        case 'filter-icecream':
+          amount = getAmountTypeGood(goods, 'Мороженое');
+          break;
+        case 'filter-soda':
+          amount = getAmountTypeGood(goods, 'Газировка');
+          break;
+        case 'filter-gum':
+          amount = getAmountTypeGood(goods, 'Жевательная резинка');
+          break;
+        case 'filter-marmalade':
+          amount = getAmountTypeGood(goods, 'Мармелад');
+          break;
+        case 'filter-marshmallows':
+          amount = getAmountTypeGood(goods, 'Зефир');
+          break;
+        case 'filter-sugar-free':
+          amount = getAmountTypeGood(goods, false, 'sugar');
+          break;
+        case 'filter-vegetarian':
+          amount = getAmountTypeGood(goods, true, 'vegetarian');
+          break;
+        case 'filter-gluten-free':
+          amount = getAmountTypeGood(goods, false, 'gluten');
+          break;
+        default:
+          amount = 0;
+          break;
+      }
+      if (parentElement.querySelector('.input-btn__item-count')) {
+        parentElement.querySelector('.input-btn__item-count').textContent = '(' + amount + ')';
+      }
     }
   };
 
-  catalogFilter[0].addEventListener('click', function (evt) {
-    var target = evt.target;
-    var currentTarget = evt.target;
+  // не знаю как сделать, ведь товара сначала нет...
+  setTimeout(function () {
+    appendItemCount();
+  }, 1500);
 
-    if (target.tagName !== 'INPUT') {
-      return;
+  var filterByKind = function (card, target, foodType) {
+    if (target[0] === undefined) {
+      return true;
     }
-    var articles = catalogCardsElement.querySelectorAll('article');
-    var inputFoodType = catalogFilter[0].querySelectorAll('input:checked');
+    return card['kind'] === foodType[getInput(target, 0).value] ||
+      card['kind'] === foodType[getInput(target, 1).value] ||
+      card['kind'] === foodType[getInput(target, 2).value] ||
+      card['kind'] === foodType[getInput(target, 3).value] ||
+      card['kind'] === foodType[getInput(target, 4).value];
+  };
 
-    var foodType = {
-      'icecream': 'Мороженое',
-      'soda': 'Газировка',
-      'gum': 'Жевательная резинка',
-      'marmalade': 'Мармелад',
-      'marshmallows': 'Зефир'
-    };
-
-    var foodTypeFilter = window.currentCards.filter(function (card) {
-      return card['kind'] === foodType[getInput(inputFoodType, 0).value] ||
-        card['kind'] === foodType[getInput(inputFoodType, 1).value] ||
-        card['kind'] === foodType[getInput(inputFoodType, 2).value] ||
-        card['kind'] === foodType[getInput(inputFoodType, 3).value] ||
-        card['kind'] === foodType[getInput(inputFoodType, 4).value];
-    });
-
-    appendItemCount(target, currentTarget, foodTypeFilter);
-
-    catalogCardsWrap.removeChild(catalogCardsElement);
-
-    for (var i = 0; i < articles.length; i++) {
-      catalogCardsElement.removeChild(articles[i]);
+  var filterByOneNutritionFacts = function (card, target, foodProperty) {
+    if (target[0] === undefined) {
+      return true;
     }
+    return card['nutritionFacts'][foodProperty[getInput(target, 0).value][0]] === foodProperty[getInput(target, 0).value][1];
+  };
 
-    window.appendCards(foodTypeFilter);
-    catalogCardsWrap.appendChild(catalogCardsElement);
-  });
-
-  catalogFilter[1].addEventListener('click', function (evt) {
-    var target = evt.target;
-    var currentTarget = evt.currentTarget;
-    var articles = catalogCardsElement.querySelectorAll('article');
-    var inputFoodProperty = catalogFilter[1].querySelectorAll('input:checked');
-
-    if (target.tagName !== 'INPUT') {
-      return;
+  var filterByTwoNutritionFacts = function (card, target, foodProperty) {
+    if (target[1] === undefined && target[2] === undefined) {
+      return true;
     }
+    return card['nutritionFacts'][foodProperty[getInput(target, 0).value][0]] === foodProperty[getInput(target, 0).value][1] &&
+      card['nutritionFacts'][foodProperty[getInput(target, 1).value][0]] === foodProperty[getInput(target, 1).value][1];
+  };
 
-    var foodProperty = {
-      'sugar-free': ['sugar', false],
-      'vegetarian': ['vegetarian', true],
-      'gluten-free': ['gluten', false]
-    };
-
-    var foodPropertyFilter = window.currentCards.filter(function (card) {
-      if (inputFoodProperty[0] === undefined) {
-        return true;
-      }
-      return card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 0).value][0]] === foodProperty[getInput(inputFoodProperty, 0).value][1];
-    }).filter(function (card) {
-      if (inputFoodProperty[1] === undefined && inputFoodProperty[2] === undefined) {
-        return true;
-      }
-      return card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 0).value][0]] === foodProperty[getInput(inputFoodProperty, 0).value][1] &&
-        card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 1).value][0]] === foodProperty[getInput(inputFoodProperty, 1).value][1];
-    }).filter(function (card) {
-      if (inputFoodProperty[1] === undefined || inputFoodProperty[2] === undefined) {
-        return true;
-      }
-      return card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 0).value][0]] === foodProperty[getInput(inputFoodProperty, 0).value][1] &&
-        card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 1).value][0]] === foodProperty[getInput(inputFoodProperty, 1).value][1] &&
-        card['nutritionFacts'][foodProperty[getInput(inputFoodProperty, 2).value][0]] === foodProperty[getInput(inputFoodProperty, 2).value][1];
-    });
-
-    // var sugarFreeCount = getAmountTypeGood(foodPropertyFilter, foodProperty['sugar-free'][1]);
-    // var vegetarianCount = getAmountTypeGood(foodPropertyFilter, foodProperty['vegetarian'][1]);
-    // var glutenFreeCount;
-
-    appendItem(target, currentTarget, foodPropertyFilter, inputFoodProperty);
-
-    catalogCardsWrap.removeChild(catalogCardsElement);
-
-    for (var i = 0; i < articles.length; i++) {
-      catalogCardsElement.removeChild(articles[i]);
+  var filterByThreeNutritionFacts = function (card, target, foodProperty) {
+    if (target[1] === undefined || target[2] === undefined) {
+      return true;
     }
-
-    window.appendCards(foodPropertyFilter);
-    catalogCardsWrap.appendChild(catalogCardsElement);
-  });
+    return card['nutritionFacts'][foodProperty[getInput(target, 0).value][0]] === foodProperty[getInput(target, 0).value][1] &&
+      card['nutritionFacts'][foodProperty[getInput(target, 1).value][0]] === foodProperty[getInput(target, 1).value][1] &&
+      card['nutritionFacts'][foodProperty[getInput(target, 2).value][0]] === foodProperty[getInput(target, 2).value][1];
+  };
 
   var getCoordsElement = function (element) {
     var box = element.getBoundingClientRect();
@@ -236,6 +187,10 @@
       for (var k = 0; k < elements.length; k++) {
         catalogCardsElement.removeChild(elements[k]);
       }
+
+      if (target === document.querySelector('#filter-' + target.value) && !target.checked) {
+        showCurrentCards(catalogCardsElement.querySelectorAll('article'));
+      }
       field = filter;
       amount = filter.length ? filter.length : 0;
       parentElement.querySelector('.input-btn__item-count').textContent = '(' + amount + ')';
@@ -258,8 +213,25 @@
 
   document.querySelector('.catalog__sidebar').addEventListener('click', function (evt) {
     var target = evt.target;
-    var currentTarget = evt. currentTarget;
+    var articles = [];
     var catalogCardsElements = catalogCardsElement.querySelectorAll('article');
+    var fieldFilter;
+    var inputFoodProperty = catalogFilter[1].querySelectorAll('input:checked');
+    var inputFoodType = catalogFilter[0].querySelectorAll('input:checked');
+
+    var foodProperty = {
+      'sugar-free': ['sugar', false],
+      'vegetarian': ['vegetarian', true],
+      'gluten-free': ['gluten', false]
+    };
+
+    var foodType = {
+      'icecream': 'Мороженое',
+      'soda': 'Газировка',
+      'gum': 'Жевательная резинка',
+      'marmalade': 'Мармелад',
+      'marshmallows': 'Зефир'
+    };
 
     if (target.classList.contains('catalog__submit')) {
       evt.preventDefault();
@@ -271,8 +243,6 @@
       return;
     }
 
-    var articles = [];
-
     for (var j = 0; j < catalogCardsElements.length; j++) {
       articles.push({
         elem: catalogCardsElements[j],
@@ -283,8 +253,43 @@
         favorite: catalogCardsElements[j].querySelector('.card__btn-favorite').classList.contains('card__btn-favorite--selected')
       });
     }
+
     if (target.name === 'mark' || target.name === 'sort') {
-      renederCatalog(target, currentTarget, articles, catalogCardsElements);
+      renederCatalog(target, evt.currentTarget, articles, catalogCardsElements);
+    }
+
+    if (target.name === 'food-type') {
+      fieldFilter = window.currentCards.filter(function (card) {
+        return filterByKind(card, inputFoodType, foodType);
+      }).filter(function (card) {
+        return filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
+      }).filter(function (card) {
+        return filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
+      }).filter(function (card) {
+        return filterByThreeNutritionFacts(card, inputFoodProperty, foodProperty);
+      });
+    }
+
+    if (target.name === 'food-property') {
+      fieldFilter = window.currentCards.filter(function (card) {
+        return filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
+      }).filter(function (card) {
+        return filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
+      }).filter(function (card) {
+        return filterByThreeNutritionFacts(card, inputFoodProperty, foodProperty);
+      }).filter(function (card) {
+        return filterByKind(card, inputFoodType, foodType);
+      });
+    }
+
+    if (target.name === 'food-type' || target.name === 'food-property') {
+      catalogCardsWrap.removeChild(catalogCardsElement);
+
+      for (var i = 0; i < catalogCardsElements.length; i++) {
+        catalogCardsElement.removeChild(catalogCardsElements[i]);
+      }
+      window.appendCards(fieldFilter);
+      catalogCardsWrap.appendChild(catalogCardsElement);
     }
   });
 

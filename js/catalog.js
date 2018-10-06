@@ -18,9 +18,11 @@
   var changeValueFields = function (target, value) {
     var cardOrderCountElement = target.querySelector('.card-order__count');
     var cardOrderPriceElement = target.querySelector('.card-order__price');
-
-    cardOrderCountElement.value = parseFloat(cardOrderCountElement.value) + value;
-    goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + value * parseFloat(cardOrderPriceElement.textContent) + ' ₽';
+    var goodAmount = parseFloat(cardOrderCountElement.value) + value;
+    if (goodAmount <= parseFloat(target.dataset.cardAmount)) {
+      cardOrderCountElement.value = parseFloat(cardOrderCountElement.value) + value;
+      goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + value * parseFloat(cardOrderPriceElement.textContent) + ' ₽';
+    }
   };
 
   var changeGoodAmount = function (target, currentTarget, value) {
@@ -101,15 +103,21 @@
     element.querySelector('input.card-order__count').id = 'card-order__' + goodCard.picture;
     element.querySelector('.card-order__count').value = element.querySelector('.visually-hidden').textContent;
     element.dataset.cardId = goodCard.id;
+    element.dataset.cardAmount = goodCard.amount;
     return element;
   };
 
   var setGoodsAmountInBasket = function (target, currentTarget) {
-    var goodCardsElements = goodCardsElement.querySelectorAll('article');
-    for (var i = 0; i < goodCardsElements.length; i++) {
-      var cardOrderCountElement = goodCardsElements[i].querySelector('.card-order__count');
-      if (goodCardsElements && currentTarget.dataset.id === goodCardsElements[i].dataset.cardId) {
-        cardOrderCountElement.value = parseFloat(cardOrderCountElement.value) + 1;
+    var goodCardElements = goodCardsElement.querySelectorAll('article');
+    var goodAmount = 0;
+    for (var i = 0; i < goodCardElements.length; i++) {
+      var cardOrderCountElement = goodCardElements[i].querySelector('.card-order__count');
+      if (goodCardElements && currentTarget.dataset.id === goodCardElements[i].dataset.cardId) {
+        goodAmount = parseFloat(cardOrderCountElement.value) + 1;
+        if (goodAmount <= goodCardElements[i].dataset.cardAmount) {
+          cardOrderCountElement.value = parseFloat(cardOrderCountElement.value) + 1;
+          goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + getSumElement(target, currentTarget) + '₽';
+        }
         return false;
       }
     }
@@ -124,7 +132,7 @@
     var goodsAmount = getGoodsAmount(element);
     var stringRight = getRightString(element);
     document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + goodsAmount + ' ' + stringRight + ':';
-    mainHeaderBasket.textContent = 'В корзине ' + goodsAmount + ' ' + stringRight;
+    mainHeaderBasket.textContent = 'В корзине ' + goodsAmount + ' ' + stringRight + ' на ' + goodsPriceElement.textContent;
   };
 
   var cleanFieldsAfterSend = function (element) {
@@ -174,6 +182,7 @@
     }
 
     var goodCard = {
+      amount: parentElement.dataset.amount,
       id: parentElement.dataset.id,
       img: parentElement.querySelector('.card__img').src,
       name: parentElement.querySelector('.card__title').textContent,
@@ -181,14 +190,16 @@
       price: parentElement.querySelector('.card__price').firstChild.data
     };
 
-    if (setGoodsAmountInBasket(target, parentElement)) {
+    if (setGoodsAmountInBasket(target, parentElement) && parentElement.dataset.amount > 0) {
       goodCardsElement.appendChild(renderGoodCard(goodCard));
       document.querySelector('.goods__total-count').firstChild.data = 'Итого за ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article')) + ':';
+      goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + getSumElement(target, parentElement) + '₽';
     }
 
-    if (!changeTextForBasket(window.util.checkIsEmptyBasket(goodCardsElement))) {
-      goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + getSumElement(target, parentElement) + ' ₽';
-      mainHeaderBasket.textContent = 'В корзине ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' + getRightString(goodCardsElement.querySelectorAll('article'));
+    if (!changeTextForBasket(window.util.checkIsEmptyBasket(goodCardsElement)) && parentElement.dataset.amount > 0) {
+      // goodsPriceElement.textContent = parseFloat(goodsPriceElement.textContent) + getSumElement(target, parentElement) + '₽';
+      mainHeaderBasket.textContent = 'В корзине ' + getGoodsAmountInBasket(goodCardsElement.querySelectorAll('article')) + ' ' +
+        getRightString(goodCardsElement.querySelectorAll('article')) + ' на ' + goodsPriceElement.textContent;
     }
   });
 

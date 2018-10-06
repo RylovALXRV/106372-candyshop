@@ -59,6 +59,7 @@
     element.querySelector('.card__weight').textContent = '/ ' + card.weight + ' Г';
     element.querySelector('.star__count').textContent = card.rating.number;
     element.dataset.id = dataId++;
+    element.dataset.amount = card.amount;
     setClassAccordingToAmount(card.amount, element);
     setClassAccordingToIsSugar(card.nutritionFacts.sugar, element);
     setClassAccordingToRating(card.rating.value, element.querySelector('.stars__rating'));
