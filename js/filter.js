@@ -10,6 +10,22 @@
   var rangeFilterElement = document.querySelector('.range__filter');
   var rangePriceMax = document.querySelector('.range__price--max');
   var rangePriceMin = document.querySelector('.range__price--min');
+  var emptyFiltersTemplate = document.querySelector('#empty-filters').content.querySelector('.catalog__empty-filter');
+
+  var renderEmptyFilters = function () {
+    var element = emptyFiltersTemplate.cloneNode(true);
+    element.classList.add('visually-hidden');
+    return element;
+  };
+
+  var setRangeCountField = function (goods) {
+    document.querySelector('span.range__count').textContent = '(' + goods.length + ')';
+    var leftBtnStyle = parseFloat(getComputedStyle(document.querySelector('.range__btn--left')).left);
+    var rightBtnStyle = parseFloat(getComputedStyle(document.querySelector('.range__btn--right')).left);
+    var coords = document.querySelector('.range__filter').getBoundingClientRect().width;
+    rangePriceMin.textContent = getPrice(window.currentCards, coords, leftBtnStyle);
+    rangePriceMax.textContent = getPrice(window.currentCards, coords, rightBtnStyle);
+  };
 
   var getInput = function (field, i) {
     return field[i] ? field[i] : false;
@@ -17,7 +33,11 @@
 
   var getAmountTypeGood = function (goods, foodType, key) {
     var count = 0;
+    var countAmount = 0;
     goods.forEach(function (good) {
+      if (good.amount > 0) {
+        countAmount++;
+      }
       if (good.kind === foodType) {
         count++;
       }
@@ -25,17 +45,11 @@
         count++;
       }
     });
-
-    return count;
+    return count || countAmount;
   };
 
-  var getCards = function (cards) {
-    return cards;
-  };
-
-  var appendItemCount = function () {
+  var appendItemCount = function (goods) {
     var amount = 0;
-    var goods = getCards(window.currentCards);
     var inputs = document.querySelectorAll('.catalog__filter input');
 
     for (var i = 0; i < inputs.length; i++) {
@@ -65,6 +79,9 @@
         case 'filter-gluten-free':
           amount = getAmountTypeGood(goods, false, 'gluten');
           break;
+        case 'filter-availability':
+          amount = getAmountTypeGood(goods);
+          break;
         default:
           amount = 0;
           break;
@@ -77,7 +94,8 @@
 
   // не знаю как сделать, ведь товара сначала нет...
   setTimeout(function () {
-    appendItemCount();
+    appendItemCount(window.currentCards);
+    setRangeCountField(catalogCardsElement.querySelectorAll('article'));
   }, 1500);
 
   var filterByKind = function (card, target, foodType) {
@@ -125,7 +143,7 @@
   };
 
   var sortByBigToSmallPrice = function (a, b) {
-    return b.expensive - a.expensive;
+    return b.price - a.price;
   };
 
   var sortByPopular = function (a, b) {
@@ -137,7 +155,7 @@
   };
 
   var sortBySmallToBigPrice = function (a, b) {
-    return a.cheep - b.cheep;
+    return a.price - b.price;
   };
 
   var sortByFeature = function (target, arr) {
@@ -187,7 +205,6 @@
       for (var k = 0; k < elements.length; k++) {
         catalogCardsElement.removeChild(elements[k]);
       }
-
       if (target === document.querySelector('#filter-' + target.value) && !target.checked) {
         showCurrentCards(catalogCardsElement.querySelectorAll('article'));
       }
@@ -211,13 +228,17 @@
     window.appendCards(window.currentCards);
   };
 
+  catalogCardsElement.appendChild(renderEmptyFilters());
+
   document.querySelector('.catalog__sidebar').addEventListener('click', function (evt) {
     var target = evt.target;
-    var articles = [];
+    var buttonRange = target.closest('.range__btn');
     var catalogCardsElements = catalogCardsElement.querySelectorAll('article');
+    var catalogEmptyFilterElement = document.querySelector('.catalog__empty-filter');
     var fieldFilter;
     var inputFoodProperty = catalogFilter[1].querySelectorAll('input:checked');
     var inputFoodType = catalogFilter[0].querySelectorAll('input:checked');
+    var articles = [];
 
     var foodProperty = {
       'sugar-free': ['sugar', false],
@@ -233,64 +254,107 @@
       'marshmallows': 'Зефир'
     };
 
-    if (target.classList.contains('catalog__submit')) {
-      evt.preventDefault();
-      showCurrentCards(catalogCardsElements);
-      return;
-    }
-
-    if (target.tagName !== 'INPUT') {
-      return;
-    }
-
     for (var j = 0; j < catalogCardsElements.length; j++) {
       articles.push({
         elem: catalogCardsElements[j],
         rating: catalogCardsElements[j].querySelector('.star__count').textContent,
-        expensive: catalogCardsElements[j].querySelector('.card__price').firstChild.data,
-        cheep: catalogCardsElements[j].querySelector('.card__price').firstChild.data,
         availability: !catalogCardsElements[j].classList.contains('card--soon'),
-        favorite: catalogCardsElements[j].querySelector('.card__btn-favorite').classList.contains('card__btn-favorite--selected')
+        favorite: catalogCardsElements[j].querySelector('.card__btn-favorite').classList.contains('card__btn-favorite--selected'),
+        price: catalogCardsElements[j].querySelector('.card__price').firstChild.data
       });
     }
 
-    if (target.name === 'mark' || target.name === 'sort') {
-      renederCatalog(target, evt.currentTarget, articles, catalogCardsElements);
+    if (target.classList.contains('catalog__submit')) {
+      evt.preventDefault();
+      showCurrentCards(catalogCardsElements);
+      catalogEmptyFilterElement.classList.add('visually-hidden');
+      return;
     }
 
-    if (target.name === 'food-type') {
-      fieldFilter = window.currentCards.filter(function (card) {
-        return filterByKind(card, inputFoodType, foodType);
-      }).filter(function (card) {
-        return filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
-      }).filter(function (card) {
-        return filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
-      }).filter(function (card) {
-        return filterByThreeNutritionFacts(card, inputFoodProperty, foodProperty);
-      });
-    }
-
-    if (target.name === 'food-property') {
-      fieldFilter = window.currentCards.filter(function (card) {
-        return filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
-      }).filter(function (card) {
-        return filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
-      }).filter(function (card) {
-        return filterByThreeNutritionFacts(card, inputFoodProperty, foodProperty);
-      }).filter(function (card) {
-        return filterByKind(card, inputFoodType, foodType);
-      });
-    }
-
-    if (target.name === 'food-type' || target.name === 'food-property') {
-      catalogCardsWrap.removeChild(catalogCardsElement);
-
-      for (var i = 0; i < catalogCardsElements.length; i++) {
-        catalogCardsElement.removeChild(catalogCardsElements[i]);
+    if (target.tagName === 'INPUT') {
+      if (target.name === 'food-type') {
+        fieldFilter = window.currentCards.filter(function (card) {
+          return filterByKind(card, inputFoodType, foodType);
+        }).filter(function (card) {
+          return filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
+        }).filter(function (card) {
+          return filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
+        }).filter(function (card) {
+          return filterByThreeNutritionFacts(card, inputFoodProperty, foodProperty);
+        });
       }
-      window.appendCards(fieldFilter);
+
+      if (target.name === 'food-property') {
+        fieldFilter = window.currentCards.filter(function (card) {
+          return filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
+        }).filter(function (card) {
+          return filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
+        }).filter(function (card) {
+          return filterByThreeNutritionFacts(card, inputFoodProperty, foodProperty);
+        }).filter(function (card) {
+          return filterByKind(card, inputFoodType, foodType);
+        });
+      }
+
+      if (target.name === 'food-type' || target.name === 'food-property') {
+        catalogCardsWrap.removeChild(catalogCardsElement);
+
+        for (var i = 0; i < catalogCardsElements.length; i++) {
+          catalogCardsElement.removeChild(catalogCardsElements[i]);
+        }
+        window.appendCards(fieldFilter);
+        catalogCardsWrap.appendChild(catalogCardsElement);
+      }
+      if (target.name === 'mark' || target.name === 'sort') {
+        renederCatalog(target, evt.currentTarget, articles, catalogCardsElements);
+      }
+    }
+
+    if (buttonRange) {
+      var filterRangeCount = articles.filter(function (article) {
+        return article.price >= document.querySelector('.range__price--min').textContent && article.price <= document.querySelector('.range__price--max').textContent;
+      });
+      catalogCardsWrap.removeChild(catalogCardsElement);
+      for (var m = 0; m < catalogCardsElements.length; m++) {
+        catalogCardsElement.removeChild(catalogCardsElements[m]);
+      }
+      for (var n = 0; n < filterRangeCount.length; n++) {
+        catalogCardsElement.appendChild(filterRangeCount[n].elem);
+      }
       catalogCardsWrap.appendChild(catalogCardsElement);
     }
+
+    if (!catalogCardsElement.querySelectorAll('article').length) {
+      catalogEmptyFilterElement.classList.remove('visually-hidden');
+    } else {
+      catalogEmptyFilterElement.classList.add('visually-hidden');
+    }
+  });
+
+  var getMaxPrice = function (goods) {
+    var maxPrice = 0;
+    goods.forEach(function (good) {
+      if (maxPrice < good.price) {
+        maxPrice = good.price;
+      }
+    });
+    return maxPrice;
+  };
+
+  var getPrice = function (goods, width, coord) {
+    var priceMax = getMaxPrice(goods);
+    return Math.floor(coord * priceMax / (width - 10));
+  };
+
+  document.querySelector('section.catalog__filter').addEventListener('mousedown', function (evt) {
+    var target = evt.target;
+
+    var buttonTarget = target.closest('.range__btn');
+    if (!buttonTarget) {
+      return;
+    }
+
+    document.querySelector('span.range__count').textContent = '(' + catalogCardsElement.querySelectorAll('article').length + ')';
   });
 
   rangeFilterElement.insertBefore(rangeFillLineElement, rangeFilterElement.firstChild);
@@ -345,13 +409,13 @@
       if (window.util.checkIsClickFeature(evt.target, 'range__btn--left')) {
         rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
         rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
-        rangePriceMin.textContent = Math.floor(newCoordsBtn.left);
+        rangePriceMin.textContent = getPrice(window.currentCards, coordsRangeFilterElement.width, newCoordsBtn.left);
       }
 
       if (window.util.checkIsClickFeature(evt.target, 'range__btn--right')) {
         rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
         rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
-        rangePriceMax.textContent = Math.floor(newCoordsBtn.right);
+        rangePriceMax.textContent = getPrice(window.currentCards, coordsRangeFilterElement.width, newCoordsBtn.right);
       }
     };
 
@@ -377,7 +441,7 @@
         }
         rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
         rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
-        rangePriceMin.textContent = Math.floor(newCoordsBtn.left);
+        rangePriceMin.textContent = getPrice(window.currentCards, coordsRangeFilterElement.width, newCoordsBtn.left);
       } else {
         newCoordsBtn.right = evtMouseup.pageX - coordsRangeFilterElement.coordXLeft - shiftBtn.right;
         if (newCoordsBtn.right >= coordsRangeFilterElement.width - coordsRangeBtnRightElement.width) {
@@ -385,7 +449,7 @@
         }
         rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
         rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
-        rangePriceMax.textContent = Math.floor(newCoordsBtn.right);
+        rangePriceMax.textContent = getPrice(window.currentCards, coordsRangeFilterElement.width, newCoordsBtn.right);
       }
       document.removeEventListener('mousemove', onButtonMousemove);
       document.removeEventListener('mouseup', onButtonMouseup);
