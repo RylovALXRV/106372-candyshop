@@ -18,13 +18,13 @@
     return element;
   };
 
-  var setRangeCountField = function (goods) {
+  var setRangeCountField = function (goods, cards) {
     document.querySelector('span.range__count').textContent = '(' + goods.length + ')';
     var leftBtnStyle = parseFloat(getComputedStyle(document.querySelector('.range__btn--left')).left);
     var rightBtnStyle = parseFloat(getComputedStyle(document.querySelector('.range__btn--right')).left);
     var coords = document.querySelector('.range__filter').getBoundingClientRect().width;
-    rangePriceMin.textContent = getPrice(window.currentCards, coords, leftBtnStyle);
-    rangePriceMax.textContent = getPrice(window.currentCards, coords, rightBtnStyle);
+    rangePriceMin.textContent = getPrice(cards, coords, leftBtnStyle);
+    rangePriceMax.textContent = getPrice(cards, coords, rightBtnStyle);
   };
 
   var getInput = function (field, i) {
@@ -94,8 +94,8 @@
 
   // не знаю как сделать, ведь товара сначала нет...
   setTimeout(function () {
-    appendItemCount(window.currentCards);
-    setRangeCountField(catalogCardsElement.querySelectorAll('article'));
+    appendItemCount(window.catalog.cards());
+    setRangeCountField(catalogCardsElement.querySelectorAll('article'), window.catalog.cards());
   }, 1500);
 
   var filterByKind = function (card, target, foodType) {
@@ -184,15 +184,15 @@
     return true;
   };
 
-  var renederCatalog = function (target, currentTarget, array, elements) {
+  var renederCatalog = function (evt, array, elements, cards) {
     var field;
     var amount = 0;
-    var parentElement = window.util.findParentElement(target, currentTarget, 'LI');
+    var parentElement = window.util.findParentElement(evt.target, evt.currentTarget, 'LI');
 
     catalogCardsWrap.removeChild(catalogCardsElement);
 
-    if (target.name === 'sort') {
-      sortByFeature(target.value, array);
+    if (evt.target.name === 'sort') {
+      sortByFeature(evt.target.value, array);
       field = array;
 
       for (var i = 0; i < array.length; i++) {
@@ -200,13 +200,13 @@
       }
     }
 
-    if (target.name === 'mark') {
-      var filter = chooseFilter(target, array);
+    if (evt.target.name === 'mark') {
+      var filter = chooseFilter(evt.target, array);
       for (var k = 0; k < elements.length; k++) {
         catalogCardsElement.removeChild(elements[k]);
       }
-      if (target === document.querySelector('#filter-' + target.value) && !target.checked) {
-        showCurrentCards(catalogCardsElement.querySelectorAll('article'));
+      if (evt.target === document.querySelector('#filter-' + evt.target.value) && !evt.target.checked) {
+        showCurrentCards(catalogCardsElement.querySelectorAll('article'), cards);
       }
       field = filter;
       amount = filter.length ? filter.length : 0;
@@ -220,12 +220,12 @@
     catalogCardsWrap.insertBefore(catalogCardsElement, catalogCardsWrap.firstChild);
   };
 
-  var showCurrentCards = function (elements) {
+  var showCurrentCards = function (elements, cards) {
     window.util.changeAttributeFields(document.querySelector('.catalog__sidebar'), 'checked', false);
     for (var k = 0; k < elements.length; k++) {
       catalogCardsElement.removeChild(elements[k]);
     }
-    window.appendCards(window.currentCards);
+    window.catalog.appendCards(cards);
   };
 
   catalogCardsElement.appendChild(renderEmptyFilters());
@@ -239,6 +239,7 @@
     var inputFoodProperty = catalogFilter[1].querySelectorAll('input:checked');
     var inputFoodType = catalogFilter[0].querySelectorAll('input:checked');
     var articles = [];
+    var currentCards = window.catalog.cards();
 
     var foodProperty = {
       'sugar-free': ['sugar', false],
@@ -266,14 +267,14 @@
 
     if (target.classList.contains('catalog__submit')) {
       evt.preventDefault();
-      showCurrentCards(catalogCardsElements);
+      showCurrentCards(catalogCardsElements, currentCards);
       catalogEmptyFilterElement.classList.add('visually-hidden');
       return;
     }
 
     if (target.tagName === 'INPUT') {
       if (target.name === 'food-type') {
-        fieldFilter = window.currentCards.filter(function (card) {
+        fieldFilter = currentCards.filter(function (card) {
           return filterByKind(card, inputFoodType, foodType);
         }).filter(function (card) {
           return filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
@@ -285,7 +286,7 @@
       }
 
       if (target.name === 'food-property') {
-        fieldFilter = window.currentCards.filter(function (card) {
+        fieldFilter = currentCards.filter(function (card) {
           return filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
         }).filter(function (card) {
           return filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
@@ -302,11 +303,11 @@
         for (var i = 0; i < catalogCardsElements.length; i++) {
           catalogCardsElement.removeChild(catalogCardsElements[i]);
         }
-        window.appendCards(fieldFilter);
+        window.catalog.appendCards(fieldFilter);
         catalogCardsWrap.appendChild(catalogCardsElement);
       }
       if (target.name === 'mark' || target.name === 'sort') {
-        renederCatalog(target, evt.currentTarget, articles, catalogCardsElements);
+        renederCatalog(evt, articles, catalogCardsElements, currentCards);
       }
     }
 
@@ -409,13 +410,13 @@
       if (window.util.checkIsClickFeature(evt.target, 'range__btn--left')) {
         rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
         rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
-        rangePriceMin.textContent = getPrice(window.currentCards, coordsRangeFilterElement.width, newCoordsBtn.left);
+        rangePriceMin.textContent = getPrice(window.catalog.cards(), coordsRangeFilterElement.width, newCoordsBtn.left);
       }
 
       if (window.util.checkIsClickFeature(evt.target, 'range__btn--right')) {
         rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
         rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
-        rangePriceMax.textContent = getPrice(window.currentCards, coordsRangeFilterElement.width, newCoordsBtn.right);
+        rangePriceMax.textContent = getPrice(window.catalog.cards(), coordsRangeFilterElement.width, newCoordsBtn.right);
       }
     };
 
@@ -441,7 +442,7 @@
         }
         rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
         rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
-        rangePriceMin.textContent = getPrice(window.currentCards, coordsRangeFilterElement.width, newCoordsBtn.left);
+        rangePriceMin.textContent = getPrice(window.catalog.cards(), coordsRangeFilterElement.width, newCoordsBtn.left);
       } else {
         newCoordsBtn.right = evtMouseup.pageX - coordsRangeFilterElement.coordXLeft - shiftBtn.right;
         if (newCoordsBtn.right >= coordsRangeFilterElement.width - coordsRangeBtnRightElement.width) {
@@ -449,7 +450,7 @@
         }
         rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
         rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
-        rangePriceMax.textContent = getPrice(window.currentCards, coordsRangeFilterElement.width, newCoordsBtn.right);
+        rangePriceMax.textContent = getPrice(window.catalog.cards(), coordsRangeFilterElement.width, newCoordsBtn.right);
       }
       document.removeEventListener('mousemove', onButtonMousemove);
       document.removeEventListener('mouseup', onButtonMouseup);

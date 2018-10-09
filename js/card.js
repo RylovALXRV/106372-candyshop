@@ -1,7 +1,6 @@
 'use strict';
 
 (function () {
-
   var catalogCardTemplate = document.querySelector('#card').content.querySelector('.card');
   var dataId = 1;
 
@@ -48,7 +47,7 @@
     }
   };
 
-  window.renderCatalogCard = function (card) {
+  var renderCatalogCard = function (card) {
     var element = catalogCardTemplate.cloneNode(true);
     var cardImgElement = element.querySelector('.card__img');
     cardImgElement.alt = getOriginalAlt(card.picture);
@@ -64,5 +63,9 @@
     setClassAccordingToIsSugar(card.nutritionFacts.sugar, element);
     setClassAccordingToRating(card.rating.value, element.querySelector('.stars__rating'));
     return element;
+  };
+
+  window.card = {
+    render: renderCatalogCard
   };
 })();

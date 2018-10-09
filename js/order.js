@@ -141,4 +141,14 @@
     changeFields(target);
     setFeatureForInputs(target);
   });
+
+  window.order = {
+    enableForm: function (element) {
+      window.util.changeAttributeFields(element, 'disabled', false);
+    },
+    disableForm: function (element) {
+      window.util.changeAttributeFields(element, 'disabled', true);
+      window.util.changeAttributeFields(element, 'required', false);
+    }
+  };
 })();
