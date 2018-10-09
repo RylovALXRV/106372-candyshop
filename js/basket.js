@@ -6,11 +6,11 @@
   var goodsCardEmptyElement = document.querySelector('.goods__card-empty');
   var goodsPriceElement = document.querySelector('.goods__price');
   var goodsTotalElement = document.querySelector('.goods__total');
-  var orderElement = document.querySelector('.order');
+  var goodInBasket = [];
 
-  // var isGoodInBasket = function () {
-  //   return goodCardsElement.classList.contains('goods__cards');
-  // };
+  var getSumElement = function (target, currentTarget) {
+    return parseFloat(window.util.findParentElement(target, currentTarget, 'ARTICLE').querySelector('.card__price').firstChild.data);
+  };
 
   var deleteGood = function (target) {
     target.parentNode.remove();
@@ -39,10 +39,6 @@
     }
   };
 
-  // var getSumElement = function (target, currentTarget) {
-  //   return parseFloat(window.util.findParentElement(target, currentTarget, 'ARTICLE').querySelector('.card__price').firstChild.data);
-  // };
-
   var getGoodsAmountInBasket = function (goods) {
     var amountGoods = [];
     for (var i = 0; i < goods.length; i++) {
@@ -50,10 +46,6 @@
     }
     return amountGoods.length;
   };
-
-  // var getTotalPrice = function (target, parentElement) {
-  //   return parseFloat(goodsPriceElement.textContent) + getSumElement(target, parentElement);
-  // };
 
   var getGoodsAmount = function (element) {
     var goodsAmount = 0;
@@ -69,12 +61,12 @@
 
   var checkBasketFullness = function () {
     if (goodCardsElement.querySelector('article')) {
-      window.order.enableForm(orderElement);
+      window.order.enableForm();
       goodsCardEmptyElement.classList.add('visually-hidden');
       goodsTotalElement.classList.remove('visually-hidden');
       return true;
     } else {
-      window.order.disableForm(orderElement);
+      window.order.disableForm();
       goodsCardEmptyElement.classList.remove('visually-hidden');
       goodsTotalElement.classList.add('visually-hidden');
       return false;
@@ -107,8 +99,38 @@
     goodCardsElement.appendChild(window.basketCard.render(card));
   };
 
-  var appendGood = function (good) {
-    addNewGood(good);
+  var isGoodInBasket = function (goodElement) {
+    var goodCardElements = goodCardsElement.querySelectorAll('article');
+    for (var i = 0; i < goodCardElements.length; i++) {
+      if (goodCardElements[i].dataset.cardId === goodElement.dataset.id &&
+        parseFloat(goodCardElements[i].querySelector('.card-order__count').value) <= parseFloat(goodCardElements[i].dataset.cardAmount)) {
+        changeGoodAmount(goodCardElements[i], goodCardsElement, 1);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  var appendGood = function (target, currentTarget, goodElement) {
+    if (isGoodInBasket(goodElement)) {
+      return;
+    }
+
+    var newGood = {
+      amount: goodElement.dataset.amount,
+      id: goodElement.dataset.id,
+      img: goodElement.querySelector('.card__img').src,
+      name: goodElement.querySelector('.card__title').textContent,
+      picture: goodElement.querySelector('.card__img').alt,
+      price: goodElement.querySelector('.card__price').firstChild.data
+    };
+
+    goodInBasket.push(newGood);
+
+    addNewGood(newGood);
+
+    setTotalInBasket(goodCardsElement.querySelectorAll('article'));
+    goodsPriceElement.textContent = parseFloat(document.querySelector('.goods__price').textContent) + getSumElement(target, currentTarget) + '₽';
   };
 
   var setTotalInBasket = function (elements) {
@@ -131,13 +153,14 @@
     for (var i = 0; i < articles.length; i++) {
       goodCardsElement.removeChild(articles[i]);
     }
-    window.order.disableForm(orderElement);
+    window.order.disableForm();
     resetValueInputs(formElement.querySelectorAll('input'));
     document.querySelector('.modal--success').classList.remove('modal--hidden');
     goodsPriceElement.textContent = '0 ₽';
     goodsTotalElement.classList.add('visually-hidden');
     goodsCardEmptyElement.classList.remove('visually-hidden');
     window.headerBasket.clear();
+    goodInBasket = [];
   };
 
   var onLoad = function () {
@@ -147,6 +170,8 @@
   var setTotalSumItems = function (elem) {
     return parseFloat(elem.querySelector('.card-order__price').textContent) * elem.querySelector('.card-order__count').value;
   };
+
+  goodCardsElement.classList.remove('goods__cards--empty');
 
   goodCardsElement.addEventListener('click', function (evt) {
     evt.preventDefault();
@@ -165,12 +190,6 @@
     } else if (target.tagName === 'BUTTON' && window.util.checkIsClickFeature(target, 'card-order__btn--decrease')) {
       changeGoodAmount(target, currentTarget, -1);
     }
-
-    // if (window.util.checkIsEmptyBasket(goodCardsElement)) {
-    //   setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
-    // } else {
-    //   window.headerBasket.clear();
-    // }
 
     if (checkBasketFullness()) {
       setTotalGoodsAmount(goodCardsElement.querySelectorAll('article'));
@@ -199,11 +218,9 @@
 
   window.basket = {
     appendGood: appendGood,
-    clear: clearBasket,
     checkGood: checkBasketFullness,
     getGoodsAmount: getGoodsAmount,
     getTotalAmount: getTotalAmount,
-    getRightString: getRightString,
-    setTotalInBasket: setTotalInBasket
+    getRightString: getRightString
   };
 })();

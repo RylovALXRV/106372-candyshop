@@ -5,17 +5,21 @@
 
   var renderGoodCard = function (goodCard) {
     var element = goodCardTemplate.cloneNode(true);
+    var cardOrderCountElement = element.querySelector('.card-order__count');
+    var cardOrderImgElement = element.querySelector('.card-order__img');
     var cardOrderTitleElement = element.querySelector('.card-order__title');
+    var visuallyHiddenElement = element.querySelector('.visually-hidden');
+
+    cardOrderImgElement.alt = goodCard.picture;
+    cardOrderImgElement.src = goodCard.img;
     cardOrderTitleElement.textContent = goodCard.name;
-    element.querySelector('.card-order__img').src = goodCard.img;
     element.querySelector('.card-order__price').textContent = goodCard.price + ' ₽';
-    element.querySelector('.visually-hidden').textContent = goodCard.amount;
-    element.querySelector('.visually-hidden').textContent = 1;
-    element.querySelector('input.card-order__count').name = goodCard.picture;
-    element.querySelector('input.card-order__count').id = 'card-order__' + goodCard.picture;
-    element.querySelector('.card-order__count').value = element.querySelector('.visually-hidden').textContent;
+    visuallyHiddenElement.textContent = 1;
     element.dataset.cardId = goodCard.id;
     element.dataset.cardAmount = goodCard.amount;
+    cardOrderCountElement.id = 'card-order__' + goodCard.picture;
+    cardOrderCountElement.name = goodCard.picture;
+    cardOrderCountElement.value = visuallyHiddenElement.textContent;
     return element;
   };
 

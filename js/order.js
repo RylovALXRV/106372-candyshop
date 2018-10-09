@@ -2,67 +2,83 @@
 
 (function () {
   var goodCardsElement = document.querySelector('.goods__cards');
+  var orderElement = document.querySelector('.order');
   var paymentCardStatusElement = document.querySelector('.payment__card-status');
 
-  var checkRightField = function (evt) {
+  var checkCardNumber = function (evt) {
     var sum = 0;
+    var targetValuesNumber = evt.value.split('');
+    for (var i = 0; i < targetValuesNumber.length; i++) {
+      var targetValueNumber = parseFloat(targetValuesNumber[i]);
+      if (i % 2 === 0) {
+        if (targetValueNumber * 2 >= 10) {
+          sum += (targetValueNumber * 2) - 9;
+        } else {
+          sum += targetValueNumber * 2;
+        }
+      } else {
+        sum += targetValueNumber;
+      }
+    }
+    if (sum % 10 !== 0) {
+      evt.setCustomValidity('введённый номер неверен');
+    } else if (targetValuesNumber.length !== 16) {
+      evt.setCustomValidity('номер карты должен состоять из 16 цифр.');
+    } else {
+      evt.setCustomValidity('');
+      return true;
+    }
+    return false;
+  };
 
+  var checkCardDate = function (evt) {
+    var targetValuesDate = evt.value.split('/');
+    if (!targetValuesDate[0] || targetValuesDate[0].length !== 2 || !window.util.checkIsNumeric(targetValuesDate[0])) {
+      evt.setCustomValidity('месяц не корректен');
+    } else if (targetValuesDate[0] === '00' || targetValuesDate[0] > 12) {
+      evt.setCustomValidity('месяц не корректен. Месяц должен быть в диапазоне от 01 до 12');
+    } else if (!targetValuesDate[1] || targetValuesDate[1].length !== 2 || !window.util.checkIsNumeric(targetValuesDate[1])) {
+      evt.setCustomValidity('год не корректен');
+    } else {
+      evt.setCustomValidity('');
+      return true;
+    }
+    return false;
+  };
+
+  var checkCardCvc = function (evt) {
+    if (!window.util.checkIsNumeric(evt.value)) {
+      evt.setCustomValidity('cvc не корректен. Он должен содержать только цифры');
+    } else if (evt.value.length !== 3) {
+      evt.setCustomValidity('cvc не корректен. Он должен содержать только 3 цифры');
+    } else {
+      evt.setCustomValidity('');
+      return true;
+    }
+    return false;
+  };
+
+  var checkCardHolder = function (evt) {
+    var targetCardHolder = evt.value.split(' ');
+    if (parseFloat(targetCardHolder[0]) || parseFloat(targetCardHolder[1])) {
+      evt.setCustomValidity('Введены не все данные');
+    } else {
+      evt.setCustomValidity('');
+      return true;
+    }
+    return false;
+  };
+
+  var checkRightField = function (evt) {
     switch (evt) {
       case (document.querySelector('#payment__card-number')):
-        var targetValuesNumber = evt.value.split('');
-        for (var i = 0; i < targetValuesNumber.length; i++) {
-          var targetValueNumber = parseFloat(targetValuesNumber[i]);
-          if (i % 2 === 0) {
-            if (targetValueNumber * 2 >= 10) {
-              sum += (targetValueNumber * 2) - 9;
-            } else {
-              sum += targetValueNumber * 2;
-            }
-          } else {
-            sum += targetValueNumber;
-          }
-        }
-        if (sum % 10 !== 0) {
-          evt.setCustomValidity('введённый номер неверен');
-        } else if (targetValuesNumber.length !== 16) {
-          evt.setCustomValidity('номер карты должен состоять из 16 цифр.');
-        } else {
-          evt.setCustomValidity('');
-          return true;
-        }
-        break;
+        return checkCardNumber(evt);
       case (document.querySelector('#payment__card-date')):
-        var targetValuesDate = evt.value.split('/');
-        if (!targetValuesDate[0] || targetValuesDate[0].length !== 2 || !window.util.checkIsNumeric(targetValuesDate[0])) {
-          evt.setCustomValidity('месяц не корректен');
-        } else if (targetValuesDate[0] === '00' || targetValuesDate[0] > 12) {
-          evt.setCustomValidity('месяц не корректен. Месяц должен быть в диапазоне от 01 до 12');
-        } else if (!targetValuesDate[1] || targetValuesDate[1].length !== 2 || !window.util.checkIsNumeric(targetValuesDate[1])) {
-          evt.setCustomValidity('год не корректен');
-        } else {
-          evt.setCustomValidity('');
-          return true;
-        }
-        break;
+        return checkCardDate(evt);
       case (document.querySelector('#payment__card-cvc')):
-        if (!window.util.checkIsNumeric(evt.value)) {
-          evt.setCustomValidity('cvc не корректен. Он должен содержать только цифры');
-        } else if (evt.value.length !== 3) {
-          evt.setCustomValidity('cvc не корректен. Он должен содержать только 3 цифры');
-        } else {
-          evt.setCustomValidity('');
-          return true;
-        }
-        break;
+        return checkCardCvc(evt);
       case (document.querySelector('#payment__cardholder')):
-        var targetCardHolder = evt.value.split(' ');
-        if (!targetCardHolder[0] || !targetCardHolder[1]) {
-          evt.setCustomValidity('Введены не все данные');
-        } else {
-          evt.setCustomValidity('');
-          return true;
-        }
-        break;
+        return checkCardHolder(evt);
     }
     return false;
   };
@@ -108,6 +124,8 @@
     }
   };
 
+  window.util.changeAttributeFields(orderElement, 'disabled', true);
+
   document.querySelector('.payment').addEventListener('input', function (evt) {
     var target = evt.target;
 
@@ -143,12 +161,12 @@
   });
 
   window.order = {
-    enableForm: function (element) {
-      window.util.changeAttributeFields(element, 'disabled', false);
+    enableForm: function () {
+      window.util.changeAttributeFields(orderElement, 'disabled', false);
     },
-    disableForm: function (element) {
-      window.util.changeAttributeFields(element, 'disabled', true);
-      window.util.changeAttributeFields(element, 'required', false);
+    disableForm: function () {
+      window.util.changeAttributeFields(orderElement, 'disabled', true);
+      window.util.changeAttributeFields(orderElement, 'required', false);
     }
   };
 })();
