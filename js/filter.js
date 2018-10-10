@@ -4,18 +4,25 @@
   var catalogCardsElement = document.querySelector('.catalog__cards');
   var catalogCardsWrap = document.querySelector('.catalog__cards-wrap');
   var catalogFilter = document.querySelectorAll('.catalog__filter');
-  var rangeBtnLeftElement = document.querySelector('.range__btn--left');
-  var rangeBtnRightElement = document.querySelector('.range__btn--right');
   var rangeFillLineElement = document.querySelector('.range__fill-line');
   var rangeFilterElement = document.querySelector('.range__filter');
   var rangePriceMax = document.querySelector('.range__price--max');
   var rangePriceMin = document.querySelector('.range__price--min');
   var emptyFiltersTemplate = document.querySelector('#empty-filters').content.querySelector('.catalog__empty-filter');
 
-  var renderEmptyFilters = function () {
-    var element = emptyFiltersTemplate.cloneNode(true);
-    element.classList.add('visually-hidden');
-    return element;
+  var getMaxPrice = function (goods) {
+    var maxPrice = 0;
+    goods.forEach(function (good) {
+      if (maxPrice < good.price) {
+        maxPrice = good.price;
+      }
+    });
+    return maxPrice;
+  };
+
+  var getPrice = function (goods, width, coord) {
+    var priceMax = getMaxPrice(goods);
+    return Math.floor(coord * priceMax / (width - 10));
   };
 
   var setRangeCountField = function (goods, cards) {
@@ -25,10 +32,6 @@
     var coords = document.querySelector('.range__filter').getBoundingClientRect().width;
     rangePriceMin.textContent = getPrice(cards, coords, leftBtnStyle);
     rangePriceMax.textContent = getPrice(cards, coords, rightBtnStyle);
-  };
-
-  var getInput = function (field, i) {
-    return field[i] ? field[i] : false;
   };
 
   var getAmountTypeGood = function (goods, foodType, key) {
@@ -92,86 +95,10 @@
     }
   };
 
-  // не знаю как сделать, ведь товара сначала нет...
-  setTimeout(function () {
-    appendItemCount(window.catalog.cards());
-    setRangeCountField(catalogCardsElement.querySelectorAll('article'), window.catalog.cards());
-  }, 1500);
-
-  var filterByKind = function (card, target, foodType) {
-    if (target[0] === undefined) {
-      return true;
-    }
-    return card['kind'] === foodType[getInput(target, 0).value] ||
-      card['kind'] === foodType[getInput(target, 1).value] ||
-      card['kind'] === foodType[getInput(target, 2).value] ||
-      card['kind'] === foodType[getInput(target, 3).value] ||
-      card['kind'] === foodType[getInput(target, 4).value];
-  };
-
-  var filterByOneNutritionFacts = function (card, target, foodProperty) {
-    if (target[0] === undefined) {
-      return true;
-    }
-    return card['nutritionFacts'][foodProperty[getInput(target, 0).value][0]] === foodProperty[getInput(target, 0).value][1];
-  };
-
-  var filterByTwoNutritionFacts = function (card, target, foodProperty) {
-    if (target[1] === undefined && target[2] === undefined) {
-      return true;
-    }
-    return card['nutritionFacts'][foodProperty[getInput(target, 0).value][0]] === foodProperty[getInput(target, 0).value][1] &&
-      card['nutritionFacts'][foodProperty[getInput(target, 1).value][0]] === foodProperty[getInput(target, 1).value][1];
-  };
-
-  var filterByThreeNutritionFacts = function (card, target, foodProperty) {
-    if (target[1] === undefined || target[2] === undefined) {
-      return true;
-    }
-    return card['nutritionFacts'][foodProperty[getInput(target, 0).value][0]] === foodProperty[getInput(target, 0).value][1] &&
-      card['nutritionFacts'][foodProperty[getInput(target, 1).value][0]] === foodProperty[getInput(target, 1).value][1] &&
-      card['nutritionFacts'][foodProperty[getInput(target, 2).value][0]] === foodProperty[getInput(target, 2).value][1];
-  };
-
-  var getCoordsElement = function (element) {
-    var box = element.getBoundingClientRect();
-    return {
-      coordXLeft: box.left + window.pageXOffset,
-      coordXRight: box.right + window.pageXOffset,
-      width: box.width
-    };
-  };
-
-  var sortByBigToSmallPrice = function (a, b) {
-    return b.price - a.price;
-  };
-
-  var sortByPopular = function (a, b) {
-    return a.elem.dataset.id - b.elem.dataset.id;
-  };
-
-  var sortByRating = function (a, b) {
-    return b.rating - a.rating;
-  };
-
-  var sortBySmallToBigPrice = function (a, b) {
-    return a.price - b.price;
-  };
-
-  var sortByFeature = function (target, arr) {
-    switch (target) {
-      case 'rating':
-        arr.sort(sortByRating);
-        return;
-      case 'cheep':
-        arr.sort(sortBySmallToBigPrice);
-        return;
-      case 'expensive':
-        arr.sort(sortByBigToSmallPrice);
-        return;
-      case 'popular':
-        arr.sort(sortByPopular);
-    }
+  var renderEmptyFilters = function () {
+    var element = emptyFiltersTemplate.cloneNode(true);
+    element.classList.add('visually-hidden');
+    return element;
   };
 
   var chooseFilter = function (target, arr) {
@@ -192,7 +119,7 @@
     catalogCardsWrap.removeChild(catalogCardsElement);
 
     if (evt.target.name === 'sort') {
-      sortByFeature(evt.target.value, array);
+      window.sort.sortFeature(evt.target.value, array);
       field = array;
 
       for (var i = 0; i < array.length; i++) {
@@ -275,25 +202,25 @@
     if (target.tagName === 'INPUT') {
       if (target.name === 'food-type') {
         fieldFilter = currentCards.filter(function (card) {
-          return filterByKind(card, inputFoodType, foodType);
+          return window.filterKind.filterByKind(card, inputFoodType, foodType);
         }).filter(function (card) {
-          return filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
+          return window.filterNutritionFacts.filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
         }).filter(function (card) {
-          return filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
+          return window.filterNutritionFacts.filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
         }).filter(function (card) {
-          return filterByThreeNutritionFacts(card, inputFoodProperty, foodProperty);
+          return window.filterNutritionFacts.filterByThreeNutritionFacts(card, inputFoodProperty, foodProperty);
         });
       }
 
       if (target.name === 'food-property') {
         fieldFilter = currentCards.filter(function (card) {
-          return filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
+          return window.filterNutritionFacts.filterByOneNutritionFacts(card, inputFoodProperty, foodProperty);
         }).filter(function (card) {
-          return filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
+          return window.filterNutritionFacts.filterByTwoNutritionFacts(card, inputFoodProperty, foodProperty);
         }).filter(function (card) {
-          return filterByThreeNutritionFacts(card, inputFoodProperty, foodProperty);
+          return window.filterNutritionFacts.filterByThreeNutritionFacts(card, inputFoodProperty, foodProperty);
         }).filter(function (card) {
-          return filterByKind(card, inputFoodType, foodType);
+          return window.filterKind.filterByKind(card, inputFoodType, foodType);
         });
       }
 
@@ -332,21 +259,6 @@
     }
   });
 
-  var getMaxPrice = function (goods) {
-    var maxPrice = 0;
-    goods.forEach(function (good) {
-      if (maxPrice < good.price) {
-        maxPrice = good.price;
-      }
-    });
-    return maxPrice;
-  };
-
-  var getPrice = function (goods, width, coord) {
-    var priceMax = getMaxPrice(goods);
-    return Math.floor(coord * priceMax / (width - 10));
-  };
-
   document.querySelector('section.catalog__filter').addEventListener('mousedown', function (evt) {
     var target = evt.target;
 
@@ -360,104 +272,14 @@
 
   rangeFilterElement.insertBefore(rangeFillLineElement, rangeFilterElement.firstChild);
 
-  rangeFilterElement.addEventListener('mousedown', function (evt) {
-    evt.preventDefault();
+  // не знаю как сделать, ведь товара сначала нет...
+  setTimeout(function () {
+    appendItemCount(window.catalog.cards());
+    setRangeCountField(catalogCardsElement.querySelectorAll('article'), window.catalog.cards());
+  }, 1500);
 
-    var startCoord = {
-      x: evt.pageX
-    };
-
-    var shiftBtn = {};
-
-    var onButtonMousemove = function (evtMousemove) {
-      var coordsRangeBtnLeftElement = getCoordsElement(rangeBtnLeftElement);
-      var coordsRangeBtnRightElement = getCoordsElement(rangeBtnRightElement);
-      var coordsRangeFilterElement = getCoordsElement(rangeFilterElement);
-
-      // найдем изначальный сдвиг курсора для пинов
-      shiftBtn.left = startCoord.x - coordsRangeBtnLeftElement.coordXLeft;
-      shiftBtn.right = startCoord.x - coordsRangeBtnRightElement.coordXLeft;
-
-      var shift = {
-        x: startCoord.x - evtMousemove.pageX
-      };
-
-      startCoord = {
-        x: evtMousemove.pageX
-      };
-
-      var newCoordsBtn = {
-        left: coordsRangeBtnLeftElement.coordXLeft - shift.x - coordsRangeFilterElement.coordXLeft,
-        right: coordsRangeBtnRightElement.coordXLeft - shift.x - coordsRangeFilterElement.coordXLeft
-      };
-
-      if (newCoordsBtn.left <= 0) {
-        newCoordsBtn.left = 0;
-      }
-
-      if (newCoordsBtn.left >= coordsRangeBtnRightElement.coordXLeft - coordsRangeFilterElement.coordXLeft - coordsRangeBtnRightElement.width) {
-        newCoordsBtn.left = coordsRangeBtnRightElement.coordXLeft - coordsRangeFilterElement.coordXLeft - coordsRangeBtnRightElement.width;
-      }
-
-      if (newCoordsBtn.right >= coordsRangeFilterElement.width - coordsRangeBtnRightElement.width) {
-        newCoordsBtn.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width;
-      }
-
-      if (newCoordsBtn.right <= coordsRangeBtnLeftElement.coordXLeft - coordsRangeFilterElement.coordXLeft + coordsRangeBtnRightElement.width) {
-        newCoordsBtn.right = coordsRangeBtnLeftElement.coordXLeft - coordsRangeFilterElement.coordXLeft + coordsRangeBtnRightElement.width;
-      }
-
-      if (window.util.checkIsClickFeature(evt.target, 'range__btn--left')) {
-        rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
-        rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
-        rangePriceMin.textContent = getPrice(window.catalog.cards(), coordsRangeFilterElement.width, newCoordsBtn.left);
-      }
-
-      if (window.util.checkIsClickFeature(evt.target, 'range__btn--right')) {
-        rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
-        rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
-        rangePriceMax.textContent = getPrice(window.catalog.cards(), coordsRangeFilterElement.width, newCoordsBtn.right);
-      }
-    };
-
-    var onButtonMouseup = function (evtMouseup) {
-      var coordsRangeBtnLeftElement = getCoordsElement(rangeBtnLeftElement);
-      var coordsRangeBtnRightElement = getCoordsElement(rangeBtnRightElement);
-      var coordsRangeFilterElement = getCoordsElement(rangeFilterElement);
-
-      var newCoordsBtn = {
-        left: coordsRangeBtnLeftElement.coordXLeft - coordsRangeFilterElement.coordXLeft,
-        right: coordsRangeBtnRightElement.coordXLeft - coordsRangeFilterElement.coordXLeft
-      };
-
-      var MIN_VALUE = 0;
-
-      shiftBtn.left = isNaN(shiftBtn.left) || shiftBtn.left < MIN_VALUE ? MIN_VALUE : shiftBtn.left;
-      shiftBtn.right = isNaN(shiftBtn.right) || shiftBtn.right > coordsRangeBtnRightElement.width ? MIN_VALUE : shiftBtn.right;
-
-      if (evtMouseup.pageX < (coordsRangeBtnRightElement.coordXLeft + coordsRangeBtnLeftElement.coordXLeft) / 2) {
-        newCoordsBtn.left = evtMouseup.pageX - coordsRangeFilterElement.coordXLeft - shiftBtn.left;
-        if (newCoordsBtn.left <= 0) {
-          newCoordsBtn.left = 0;
-        }
-        rangeBtnLeftElement.style.left = newCoordsBtn.left + 'px';
-        rangeFillLineElement.style.left = newCoordsBtn.left + 'px';
-        rangePriceMin.textContent = getPrice(window.catalog.cards(), coordsRangeFilterElement.width, newCoordsBtn.left);
-      } else {
-        newCoordsBtn.right = evtMouseup.pageX - coordsRangeFilterElement.coordXLeft - shiftBtn.right;
-        if (newCoordsBtn.right >= coordsRangeFilterElement.width - coordsRangeBtnRightElement.width) {
-          newCoordsBtn.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width;
-        }
-        rangeBtnRightElement.style.left = newCoordsBtn.right + 'px';
-        rangeFillLineElement.style.right = coordsRangeFilterElement.width - coordsRangeBtnRightElement.width - newCoordsBtn.right + 'px';
-        rangePriceMax.textContent = getPrice(window.catalog.cards(), coordsRangeFilterElement.width, newCoordsBtn.right);
-      }
-      document.removeEventListener('mousemove', onButtonMousemove);
-      document.removeEventListener('mouseup', onButtonMouseup);
-    };
-
-    document.addEventListener('mousemove', onButtonMousemove);
-    document.addEventListener('mouseup', onButtonMouseup);
-  });
+  window.filter = {
+    appendItemCount: appendItemCount,
+    setRangeCountField: setRangeCountField
+  };
 })();
-

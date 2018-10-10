@@ -102,8 +102,7 @@
   var isGoodInBasket = function (goodElement) {
     var goodCardElements = goodCardsElement.querySelectorAll('article');
     for (var i = 0; i < goodCardElements.length; i++) {
-      if (goodCardElements[i].dataset.cardId === goodElement.dataset.id &&
-        parseFloat(goodCardElements[i].querySelector('.card-order__count').value) <= parseFloat(goodCardElements[i].dataset.cardAmount)) {
+      if (goodCardElements[i].dataset.cardId === goodElement.dataset.id) {
         changeGoodAmount(goodCardElements[i], goodCardsElement, 1);
         return true;
       }
@@ -112,12 +111,13 @@
   };
 
   var appendGood = function (target, currentTarget, goodElement) {
-    if (isGoodInBasket(goodElement)) {
+    if (isGoodInBasket(goodElement) || parseFloat(goodElement.dataset.amount) === 0) {
       return;
     }
 
     var newGood = {
-      amount: goodElement.dataset.amount,
+      amount: 1,
+      availableAmount: goodElement.dataset.amount,
       id: goodElement.dataset.id,
       img: goodElement.querySelector('.card__img').src,
       name: goodElement.querySelector('.card__title').textContent,
