@@ -131,4 +131,8 @@
     document.addEventListener('mousemove', onButtonMousemove);
     document.addEventListener('mouseup', onButtonMouseup);
   });
+
+  window.range = {
+    getMaxPrice: getMaxPrice
+  };
 })();

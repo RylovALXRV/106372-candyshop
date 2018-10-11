@@ -22,6 +22,8 @@
     catalogCardsElement.classList.remove('catalog__cards--load');
     currentCards = cards;
     appendCards(cards);
+    window.filter.appendItemCount(cards);
+    window.filter.setRangeCountField(catalogCardsElement.querySelectorAll('article'), cards);
   };
 
   var getCurrentCards = function () {
@@ -29,6 +31,7 @@
   };
 
   window.backend.load(onLoad, window.util.onError);
+  catalogCardsElement.appendChild(window.catalogEmpty.render());
 
   catalogCardsElement.addEventListener('click', function (evt) {
     evt.preventDefault();
