@@ -213,28 +213,55 @@
     return favoriteCard;
   };
 
-  catalogFilter[3].addEventListener('click', function (evt) {
-    var target = evt.target;
-    var favoriteCard = chooseFavoriteCard();
+  var filterInputFields = function (inputs, value) {
+    var inputsField = [];
+    for (var i = 0; i < inputs.length; i++) {
+      if (inputs[i].value === value) {
+        continue;
+      }
+      inputsField.push(inputs[i]);
+    }
+    return inputsField;
+  };
 
-    if (target.tagName !== 'INPUT') {
+  document.querySelector('#filter-availability').addEventListener('click', function (evt) {
+    var target = evt.target;
+
+    cardFilter = window.catalog.cards();
+    var fieldInputs = filterInputFields(document.querySelectorAll('.catalog__sidebar input'), target.value);
+    window.util.changeAttributeFields(fieldInputs, 'checked', false);
+
+    var filterAvailibility = cardFilter.filter(function (card) {
+      return card.amoumt !== 0;
+    });
+
+    if (!target.checked) {
+      appendCards(window.catalog.cards(), catalogCardsElement.querySelectorAll('article'));
       return;
     }
 
-    cardFilter = window.catalog.cards();
+    cardFilter = filterAvailibility;
 
-    if (target.value === 'favorite' && target.checked) {
-      var filterFavorite = cardFilter.filter(function (card) {
-        return favoriteCard.indexOf(card.name);
-      });
-      cardFilter = filterFavorite;
+    appendCards(cardFilter, catalogCardsElement.querySelectorAll('article'));
+  });
+
+  document.querySelector('#filter-favorite').addEventListener('click', function (evt) {
+    var favoriteCard = chooseFavoriteCard();
+    var target = evt.target;
+    cardFilter = window.catalog.cards();
+    var fieldInputs = filterInputFields(document.querySelectorAll('.catalog__sidebar input'), target.value);
+    window.util.changeAttributeFields(fieldInputs, 'checked', false);
+
+    var filterFavorite = cardFilter.filter(function (card) {
+      return favoriteCard.indexOf(card.name) !== -1;
+    });
+
+    if (!target.checked) {
+      appendCards(window.catalog.cards(), catalogCardsElement.querySelectorAll('article'));
+      return;
     }
-    if (target.value === 'availability' && target.checked) {
-      var filterAvailibility = cardFilter.filter(function (card) {
-        return card.amoumt !== 0;
-      });
-    }
-    cardFilter = filterFavorite || filterAvailibility;
+
+    cardFilter = filterFavorite;
     appendCards(cardFilter, catalogCardsElement.querySelectorAll('article'));
   });
 

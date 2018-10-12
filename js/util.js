@@ -16,10 +16,9 @@ window.util = (function () {
       modalErrorElement.classList.remove('modal--hidden');
       modalErrorElement.querySelector('.modal__message').textContent = errorMessage;
     },
-    changeAttributeFields: function (element, attribute, boolean) {
-      var inputs = element.querySelectorAll('input');
-      for (var i = 0; i < inputs.length; i++) {
-        inputs[i][attribute] = boolean;
+    changeAttributeFields: function (inputsElements, attribute, boolean) {
+      for (var i = 0; i < inputsElements.length; i++) {
+        inputsElements[i][attribute] = boolean;
       }
     },
     findParentElement: function (target, currentEvt, tagName) {

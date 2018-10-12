@@ -3,6 +3,7 @@
 (function () {
   var goodCardsElement = document.querySelector('.goods__cards');
   var orderElement = document.querySelector('.order');
+  var orderInputsElements = orderElement.querySelectorAll('input');
   var paymentCardStatusElement = document.querySelector('.payment__card-status');
 
   var checkCardNumber = function (evt) {
@@ -124,7 +125,7 @@
     }
   };
 
-  window.util.changeAttributeFields(orderElement, 'disabled', true);
+  window.util.changeAttributeFields(orderInputsElements, 'disabled', true);
 
   document.querySelector('.payment').addEventListener('input', function (evt) {
     var target = evt.target;
@@ -162,11 +163,11 @@
 
   window.order = {
     enableForm: function () {
-      window.util.changeAttributeFields(orderElement, 'disabled', false);
+      window.util.changeAttributeFields(orderInputsElements, 'disabled', false);
     },
     disableForm: function () {
-      window.util.changeAttributeFields(orderElement, 'disabled', true);
-      window.util.changeAttributeFields(orderElement, 'required', false);
+      window.util.changeAttributeFields(orderInputsElements, 'disabled', true);
+      window.util.changeAttributeFields(orderInputsElements, 'required', false);
     }
   };
 })();
